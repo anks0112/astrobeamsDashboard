@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // Local storage
 import { combineReducers } from "redux";
-import thunk from "redux-thunk";
+import { thunk } from "redux-thunk";
 
 // Persist Config
 const persistConfig = {
@@ -18,10 +18,11 @@ const rootReducer = combineReducers({
 // Persisted Reducer
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-// Create Store
+// 🚀 Fix: `middleware` must be a function
 export const store = configureStore({
   reducer: persistedReducer,
-  middleware: [thunk], // Add thunk middleware
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({ serializableCheck: false }).concat(thunk),
 });
 
 export const persistor = persistStore(store);
