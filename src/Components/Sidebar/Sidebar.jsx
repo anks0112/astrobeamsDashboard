@@ -98,7 +98,7 @@ const Sidebar = () => {
               sx={{
                 ...styles.listItem,
                 backgroundColor:
-                  selected === item.text ? "#E0F2F1" : "transparent",
+                  selected === item.text ? "#FFEFD5" : "transparent",
               }}
               onClick={item.action} // Calls the logout action instead of navigating
             >
@@ -170,8 +170,7 @@ const styles = {
     borderRadius: "10px",
     cursor: "pointer",
     "&:hover": {
-      // border: "1px solid #00796B",
-      backgroundColor: "#E0F2F1", // Hover effect
+      backgroundColor: "#FFEFD5", // Hover effect
     },
   },
   listItemText: {
