@@ -4,6 +4,9 @@ import storage from "redux-persist/lib/storage"; // Local storage
 import { combineReducers } from "redux";
 import { thunk } from "redux-thunk";
 
+import allAstrologersReducers from "./slices/fetchAllAstrologers";
+import createAstrologerReducers from "./slices/createAstrologer";
+
 // Persist Config
 const persistConfig = {
   key: "root",
@@ -12,7 +15,8 @@ const persistConfig = {
 
 // Combine Reducers
 const rootReducer = combineReducers({
-  //   user: userReducer, // Add other reducers here
+  allAstrologers: allAstrologersReducers,
+  createAstrologer: createAstrologerReducers,
 });
 
 // Persisted Reducer
