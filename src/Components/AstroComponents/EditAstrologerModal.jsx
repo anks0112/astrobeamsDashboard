@@ -15,6 +15,7 @@ import { useDispatch } from "react-redux";
 import api from "../../utils/api";
 import { createAstrologer } from "../../redux/slices/createAstrologer";
 import { astrologerSchema } from "../../utils/zodSchema";
+import { toast } from "react-toastify";
 
 const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
   const dispatch = useDispatch();
@@ -102,17 +103,17 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
     }));
   };
 
-  const handleBankDetailsChange = (e) => {
-    const { name, value } = e.target;
+  // const handleBankDetailsChange = (e) => {
+  //   const { name, value } = e.target;
 
-    setFormData((prevData) => ({
-      ...prevData,
-      bank_details: {
-        ...prevData.bank_details,
-        [name]: value,
-      },
-    }));
-  };
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     bank_details: {
+  //       ...prevData.bank_details,
+  //       [name]: value,
+  //     },
+  //   }));
+  // };
 
   const handleFileUpload = async (e, fieldName) => {
     const file = e.target.files[0];
@@ -192,8 +193,14 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
       );
 
       if (response.status === 200) {
-        alert("Astrologer updated successfully!");
+        toast.success(response.data.msg, {
+          position: "top-center",
+          autoClose: "2000",
+        });
         handleClose(); // Close modal on success
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         alert("Failed to update astrologer.");
       }
@@ -207,7 +214,7 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
     <Modal open={open} onClose={handleClose}>
       <Box sx={styles.modalBox}>
         <Typography variant="h5" sx={styles.heading}>
-          Add Astrologer
+          Edit Astrologer
         </Typography>
         <form onSubmit={handleSubmit}>
           {/* Personal Details */}
@@ -353,7 +360,12 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
                 name="experience"
                 type="text" // ✅ Change to text, as backend expects a string
                 value={formData.experience}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 0 && value <= 1000) {
+                    handleChange(e);
+                  }
+                }}
                 required
               />
             </Grid>
@@ -462,8 +474,13 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
                 fullWidth
                 label="Current Balance"
                 name="current_balance"
-                value={formData.voice_call_offer_price}
-                onChange={handleChange}
+                value={formData.current_balance}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 0 && value <= 1000000) {
+                    handleChange(e);
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -472,16 +489,26 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
                 label="Withdrawl balance"
                 name="withdrawl_balance"
                 value={formData.withdrawl_balance}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 0 && value <= 1000000) {
+                    handleChange(e);
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="Commission"
-                name="commision"
+                name="commission"
                 value={formData.commission}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 0 && value <= 1000000) {
+                    handleChange(e);
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -527,7 +554,7 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
                 variant="contained"
                 component="label"
                 fullWidth
-                sx={{ mt: 2, mb: 2 }}
+                sx={{ mt: 2, mb: 2, backgroundColor: "#ff9800" }}
               >
                 Upload {field.replace("_", " ").toUpperCase()}
                 <input
@@ -541,7 +568,11 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
 
           {/* Submit Button */}
           <Box sx={styles.buttonContainer}>
-            <Button type="submit" variant="contained">
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ backgroundColor: "#ff9800" }}
+            >
               Submit
             </Button>
           </Box>

@@ -58,6 +58,9 @@ const AddAstrologerModal = ({ open, handleClose }) => {
     ) {
       if (!/^\d*$/.test(value)) return; // Prevents non-numeric input
       if (value < 0) return; // Prevents negative numbers
+      // if (name === "phone") {
+      //   newValue = value.slice(0, 10);
+      // }
     }
 
     setFormData((prevData) => ({
@@ -126,8 +129,16 @@ const AddAstrologerModal = ({ open, handleClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("✅ Valid Data:", formData);
-    dispatch(createAstrologer(formData));
+    const formattedPhone =
+      formData.phone.length === 10 ? `+91${formData.phone}` : "";
+
+    const requestData = {
+      ...formData,
+      phone: formattedPhone, // ✅ Ensures +91 before sending
+    };
+
+    console.log("✅ Valid Data:", requestData);
+    dispatch(createAstrologer(requestData));
     handleClose();
   };
 
@@ -170,8 +181,17 @@ const AddAstrologerModal = ({ open, handleClose }) => {
                 label="Phone"
                 name="phone"
                 value={formData.phone}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, ""); // Remove non-numeric input
+                  if (value.length <= 10) {
+                    handleChange(e); // Pass only valid numbers
+                  }
+                }}
                 required
+                inputProps={{
+                  maxLength: 10, // Limits input to 10 characters
+                }}
+                // type="number" // ✅ Ensures numeric input
               />
             </Grid>
             <Grid item xs={6}>
@@ -265,6 +285,9 @@ const AddAstrologerModal = ({ open, handleClose }) => {
                 value={formData.bank_details.account_number}
                 onChange={handleBankDetailsChange}
                 required
+                type="number" // Ensures only numeric input
+                inputMode="numeric" // Optimizes mobile keyboard for numbers
+                pattern="[0-9]*" // Ensures only numbers are allowed
               />
             </Grid>
           </Grid>
@@ -281,7 +304,12 @@ const AddAstrologerModal = ({ open, handleClose }) => {
                 name="experience"
                 type="text" // ✅ Change to text, as backend expects a string
                 value={formData.experience}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 0 && value <= 1000) {
+                    handleChange(e);
+                  }
+                }}
                 required
               />
             </Grid>
@@ -401,7 +429,7 @@ const AddAstrologerModal = ({ open, handleClose }) => {
                 variant="contained"
                 component="label"
                 fullWidth
-                sx={{ mt: 2, mb: 2 }}
+                sx={{ mt: 2, mb: 2, backgroundColor: "#ff9800" }}
               >
                 Upload {field.replace("_", " ").toUpperCase()}
                 <input
@@ -415,7 +443,11 @@ const AddAstrologerModal = ({ open, handleClose }) => {
 
           {/* Submit Button */}
           <Box sx={styles.buttonContainer}>
-            <Button type="submit" variant="contained">
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ backgroundColor: "#ff9800" }}
+            >
               Submit
             </Button>
           </Box>
