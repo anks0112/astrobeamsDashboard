@@ -10,6 +10,7 @@ import SupportTicket from "./Pages/SupportTicket";
 import Banners from "./Pages/Banners";
 import Sidebar from "./Components/Sidebar/Sidebar";
 import Dashboard from "./Pages/Dashboard";
+import Login from "./Pages/Login";
 import "./Styles/global.css";
 
 // ✅ Layout Component (Navbar, Sidebar & Dynamic Content)
@@ -33,11 +34,12 @@ const Layout = () => {
 
 // ✅ Define Routes
 const router = createBrowserRouter([
+  { path: "/", element: <Login /> },
   {
     path: "/",
     element: <Layout />,
     children: [
-      { path: "/", element: <Dashboard /> },
+      { path: "/dashboard", element: <Dashboard /> },
       { path: "/astrologers", element: <Astrologers /> },
       { path: "/users", element: <Users /> },
       { path: "/orders", element: <Orders /> },

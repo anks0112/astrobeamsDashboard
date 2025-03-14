@@ -43,7 +43,7 @@ const Sidebar = () => {
   }, [location.pathname]);
 
   const menuItems = [
-    { text: "Dashboard", icon: <Home />, url: "/" },
+    { text: "Dashboard", icon: <Home />, url: "/dashboard" },
     { text: "Astrologers", icon: <AutoAwesome />, url: "/astrologers" },
     { text: "Users", icon: <People />, url: "/users" },
     { text: "Orders", icon: <Inventory />, url: "/orders" },
