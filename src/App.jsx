@@ -11,7 +11,10 @@ import Banners from "./Pages/Banners";
 import Sidebar from "./Components/Sidebar/Sidebar";
 import Dashboard from "./Pages/Dashboard";
 import Login from "./Pages/Login";
+import Blog from "./Pages/Blog";
 import "./Styles/global.css";
+import BlogPageWrapper from "./Components/BlogPageComponents/BlogPageWrapper";
+import AstrologerView from "./Pages/AstrologerView";
 
 // ✅ Layout Component (Navbar, Sidebar & Dynamic Content)
 const Layout = () => {
@@ -45,6 +48,9 @@ const router = createBrowserRouter([
       { path: "/orders", element: <Orders /> },
       { path: "/support-ticket", element: <SupportTicket /> },
       { path: "/banners", element: <Banners /> },
+      { path: "/blog", element: <Blog /> },
+      { path: "/blog-inner/:id", element: <BlogPageWrapper /> },
+      { path: "/astrologer-view/:id", element: <AstrologerView /> },
     ],
   },
   // { path: "*", element: <NotFound /> },

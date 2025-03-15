@@ -6,6 +6,7 @@ import { thunk } from "redux-thunk";
 
 import allAstrologersReducers from "./slices/fetchAllAstrologers";
 import createAstrologerReducers from "./slices/createAstrologer";
+import allBlogsReducers from "./slices/allBlogs";
 
 // Persist Config
 const persistConfig = {
@@ -17,6 +18,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   allAstrologers: allAstrologersReducers,
   createAstrologer: createAstrologerReducers,
+  allBlogs: allBlogsReducers,
 });
 
 // Persisted Reducer

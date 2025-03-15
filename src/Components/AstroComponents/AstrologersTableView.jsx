@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button, IconButton, Switch, Typography } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Delete, Edit, RemoveRedEye } from "@mui/icons-material";
 import AddAstrologerModal from "./AddAstrologerModal";
 import DeleteConfirmationModal from "../DeleteConfirmationModal";
@@ -145,6 +145,12 @@ const AstrologersTableView = ({ astrologers }) => {
       headerAlign: "center",
       renderCell: (params) => (
         <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
+          <Link to={`/astrologer-view/${params.row.id}`}>
+            <IconButton size="small" sx={{ color: "#ff9800" }}>
+              <RemoveRedEye />
+            </IconButton>
+          </Link>
+
           {/* <Link to={`/listings/inner/${params.row.id}`}> */}
           <IconButton
             size="small"
@@ -199,8 +205,8 @@ const AstrologersTableView = ({ astrologers }) => {
         sx={{
           borderRadius: "10px",
           boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-          backgroundColor: "#fff",
           overflow: "hidden",
+          backgroundColor: "#FEF2E7",
         }}
       >
         <DataGrid
@@ -224,8 +230,8 @@ const AstrologersTableView = ({ astrologers }) => {
             "& .MuiDataGrid-root": {
               textAlign: "center",
             },
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#f8f9fa",
+            "& .MuiDataGrid-columnHeader": {
+              backgroundColor: "#FEF2E7",
               fontWeight: "bold",
               textAlign: "center",
             },

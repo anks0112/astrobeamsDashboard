@@ -15,6 +15,7 @@ import {
   AutoAwesome,
   People,
   Support,
+  ChatRounded,
 } from "@mui/icons-material";
 import { Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -49,6 +50,8 @@ const Sidebar = () => {
     { text: "Orders", icon: <Inventory />, url: "/orders" },
     { text: "Banners", icon: <BrandingWatermark />, url: "/banners" },
     { text: "Support Ticket", icon: <Support />, url: "/support-ticket" },
+    { text: "Blogs", icon: <ChatRounded />, url: "/blog" },
+
     {
       text: "Sign Out",
       icon: <Logout />,
@@ -82,13 +85,17 @@ const Sidebar = () => {
               <ListItem
                 sx={{
                   ...styles.listItem,
+
                   backgroundColor:
                     selected === item.text ? "#FFEFD5" : "transparent",
                 }}
                 onClick={() => setSelected(item.text)}
               >
                 <ListItemIcon sx={styles.icon}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} sx={styles.listItemText} />
+                <ListItemText
+                  primary={item.text}
+                  sx={{ ...styles.listItemText }}
+                />
               </ListItem>
             </Link>
           ) : (
