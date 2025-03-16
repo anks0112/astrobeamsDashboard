@@ -198,7 +198,7 @@ const BlogsTableView = ({ blogs }) => {
       sx={{
         borderRadius: "10px",
         boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-        backgroundColor: "#fff",
+        backgroundColor: "#FEF2E7",
         overflow: "hidden",
       }}
     >
@@ -222,8 +222,8 @@ const BlogsTableView = ({ blogs }) => {
         rowHeight={100}
         slots={{ noRowsOverlay: NoRowsOverlay, toolbar: GridToolbar }} // ✅ Fix: Attach Custom No Data Component
         sx={{
-          "& .MuiDataGrid-columnHeaders": {
-            backgroundColor: "#f8f9fa",
+          "& .MuiDataGrid-columnHeader": {
+            backgroundColor: "#FEF2E7",
             fontWeight: "bold",
             textAlign: "center",
           },

@@ -6,6 +6,7 @@ import {
   IconButton,
   Box,
   responsiveFontSizes,
+  Typography,
 } from "@mui/material";
 import {
   Search,
@@ -14,8 +15,10 @@ import {
   Notifications,
 } from "@mui/icons-material";
 import "./navbar.css";
+import { useSelector } from "react-redux";
 
 const Navbar = () => {
+  const { user_full_name } = useSelector((state) => state.authSlice);
   return (
     <AppBar position="static" sx={styles.appBar}>
       <Toolbar sx={styles.toolbar}>
@@ -25,23 +28,24 @@ const Navbar = () => {
         </Box>
 
         {/* Search Box */}
-        <Box sx={styles.searchBox}>
+        {/* <Box sx={styles.searchBox}>
           <Search sx={styles.searchIcon} />
           <InputBase placeholder="Type here..." sx={styles.searchInput} />
-        </Box>
+        </Box> */}
 
         {/* Menu Items */}
         <Box sx={styles.menuIcons}>
+          <Typography variant="body1">Welcome {user_full_name}</Typography>
           <IconButton sx={styles.icon}>
             <AccountCircle />
           </IconButton>
           {/* <IconButton sx={styles.icon}>
             <Settings />
           </IconButton> */}
-          <IconButton sx={styles.icon}>
+          {/* <IconButton sx={styles.icon}>
             <Notifications />
             <span id="notificationSpan">1</span>
-          </IconButton>
+          </IconButton> */}
         </Box>
       </Toolbar>
     </AppBar>

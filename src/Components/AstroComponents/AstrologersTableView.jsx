@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button, IconButton, Switch, Typography } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Delete, Edit, RemoveRedEye } from "@mui/icons-material";
 import AddAstrologerModal from "./AddAstrologerModal";
 import DeleteConfirmationModal from "../DeleteConfirmationModal";
@@ -11,11 +11,15 @@ import EditAstrologerModal from "./EditAstrologerModal";
 
 const AstrologersTableView = ({ astrologers }) => {
   const navigate = useNavigate();
+
+  const location = useLocation();
   const [modalOpen, setModalOpen] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [selectedAstrologerId, setSelectedAstrologerId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false); // ✅ Track Edit Modal Open
+
+  const isDashboard = location.pathname === "/dashboard";
 
   const handleDelete = async () => {
     if (!selectedAstrologerId) {
@@ -41,6 +45,7 @@ const AstrologersTableView = ({ astrologers }) => {
           autoClose: 3000,
         });
         setOpenModal(false);
+        window.location.reload();
       }
     } catch (error) {
       console.error("❌ Delete Error:", error);
@@ -68,16 +73,20 @@ const AstrologersTableView = ({ astrologers }) => {
     }));
   };
 
-  const rows =
-    astrologers?.map((astrologer, index) => ({
-      id: astrologer?._id,
-      name: astrologer?.name || "-",
-      email: astrologer?.email || "-",
-      city: astrologer?.city || "-",
-      phone: astrologer?.phone || "-",
-      current_balance: astrologer?.current_balance || "-",
-      is_active: astrologer?.is_active || false, // Use the correct field
-    })) || [];
+  const filteredAstrologers =
+    location.pathname === "/dashboard"
+      ? astrologers.filter((astro) => astro.is_active) // ✅ Only Active Astrologers
+      : astrologers;
+
+  const rows = filteredAstrologers.map((astrologer) => ({
+    id: astrologer._id,
+    name: astrologer.name || "-",
+    email: astrologer.email || "-",
+    city: astrologer.city || "-",
+    phone: astrologer.phone || "-",
+    current_balance: astrologer.current_balance || "-",
+    is_active: astrologer.is_active || false,
+  }));
 
   const columns = [
     {
@@ -108,27 +117,27 @@ const AstrologersTableView = ({ astrologers }) => {
       align: "center",
       headerAlign: "center",
     },
-    {
-      field: "active",
-      headerName: "Active",
-      flex: 0.5,
-      align: "center",
-      headerAlign: "center",
-      renderCell: (params) => (
-        <Switch
-          checked={Boolean(activeStates[params.row.id])} // Ensures true/false, never undefined
-          onChange={() => handleToggleActive(params.row.id)}
-          sx={{
-            "& .MuiSwitch-switchBase.Mui-checked": {
-              color: "#ff9800", // Orange color when checked
-            },
-            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-              backgroundColor: "#ff9800", // Track color when checked
-            },
-          }}
-        />
-      ),
-    },
+    // {
+    //   field: "active",
+    //   headerName: "Active",
+    //   flex: 0.5,
+    //   align: "center",
+    //   headerAlign: "center",
+    //   renderCell: (params) => (
+    //     <Switch
+    //       checked={Boolean(activeStates[params.row.id])} // Ensures true/false, never undefined
+    //       onChange={() => handleToggleActive(params.row.id)}
+    //       sx={{
+    //         "& .MuiSwitch-switchBase.Mui-checked": {
+    //           color: "#ff9800", // Orange color when checked
+    //         },
+    //         "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+    //           backgroundColor: "#ff9800", // Track color when checked
+    //         },
+    //       }}
+    //     />
+    //   ),
+    // },
 
     {
       field: "current_balance",
@@ -137,7 +146,10 @@ const AstrologersTableView = ({ astrologers }) => {
       align: "center",
       headerAlign: "center",
     },
-    {
+  ];
+
+  if (!isDashboard) {
+    columns.push({
       field: "actions",
       headerName: "Action",
       width: 200,
@@ -151,7 +163,6 @@ const AstrologersTableView = ({ astrologers }) => {
             </IconButton>
           </Link>
 
-          {/* <Link to={`/listings/inner/${params.row.id}`}> */}
           <IconButton
             size="small"
             sx={{ color: "#ff9800" }}
@@ -162,8 +173,6 @@ const AstrologersTableView = ({ astrologers }) => {
           >
             <Delete />
           </IconButton>
-          {/* </Link> */}
-          {/* <Link to={`/listings/inner/${params.row.id}`}> */}
           <IconButton
             size="small"
             sx={{ color: "#ff9800" }}
@@ -174,11 +183,10 @@ const AstrologersTableView = ({ astrologers }) => {
           >
             <Edit />
           </IconButton>
-          {/* </Link> */}
         </Box>
       ),
-    },
-  ];
+    });
+  }
 
   return (
     <Box sx={{ padding: "20px" }}>
@@ -191,15 +199,20 @@ const AstrologersTableView = ({ astrologers }) => {
         }}
       >
         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-          Astrologers
+          {location.pathname === "/dashboard"
+            ? "Active Astrologers"
+            : "Astrologers"}
         </Typography>
-        <Button
-          variant="contained"
-          sx={{ color: "white", backgroundColor: "#ff9800" }}
-          onClick={() => setModalOpen(true)}
-        >
-          Add Astrologers
-        </Button>
+
+        {location.pathname !== "/dashboard" && (
+          <Button
+            variant="contained"
+            sx={{ color: "white", backgroundColor: "#ff9800" }}
+            onClick={() => setModalOpen(true)}
+          >
+            Add Astrologers
+          </Button>
+        )}
       </Box>
       <Box
         sx={{

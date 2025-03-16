@@ -16,6 +16,7 @@ import {
   People,
   Support,
   ChatRounded,
+  CurrencyRupee,
 } from "@mui/icons-material";
 import { Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -47,10 +48,10 @@ const Sidebar = () => {
     { text: "Dashboard", icon: <Home />, url: "/dashboard" },
     { text: "Astrologers", icon: <AutoAwesome />, url: "/astrologers" },
     { text: "Users", icon: <People />, url: "/users" },
-    { text: "Orders", icon: <Inventory />, url: "/orders" },
+    { text: "Earnings", icon: <CurrencyRupee />, url: "/earnings" },
     { text: "Banners", icon: <BrandingWatermark />, url: "/banners" },
-    { text: "Support Ticket", icon: <Support />, url: "/support-ticket" },
     { text: "Blogs", icon: <ChatRounded />, url: "/blog" },
+    // { text: "Support Ticket", icon: <Support />, url: "/support-ticket" },
 
     {
       text: "Sign Out",

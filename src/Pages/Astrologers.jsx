@@ -15,7 +15,7 @@ const Astrologers = () => {
 
   useEffect(() => {
     dispatch(fetchAllAstrologers());
-  }, []);
+  }, [dispatch]);
 
   return (
     <>

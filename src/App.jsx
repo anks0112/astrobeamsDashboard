@@ -5,7 +5,6 @@ import "react-toastify/dist/ReactToastify.css"; // Import styles
 import Navbar from "./Components/Navbar/Navbar";
 import Astrologers from "./Pages/Astrologers";
 import Users from "./Pages/Users";
-import Orders from "./Pages/Orders";
 import SupportTicket from "./Pages/SupportTicket";
 import Banners from "./Pages/Banners";
 import Sidebar from "./Components/Sidebar/Sidebar";
@@ -15,6 +14,9 @@ import Blog from "./Pages/Blog";
 import "./Styles/global.css";
 import BlogPageWrapper from "./Components/BlogPageComponents/BlogPageWrapper";
 import AstrologerView from "./Pages/AstrologerView";
+import Earnings from "./Pages/Earnings";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
 
 // ✅ Layout Component (Navbar, Sidebar & Dynamic Content)
 const Layout = () => {
@@ -35,17 +37,31 @@ const Layout = () => {
   );
 };
 
+const ProtectedRoute = ({ children }) => {
+  const { isLoggedIn } = useSelector((state) => state.authSlice);
+
+  if (!isLoggedIn) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 // ✅ Define Routes
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
   {
     path: "/",
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
       { path: "/dashboard", element: <Dashboard /> },
       { path: "/astrologers", element: <Astrologers /> },
       { path: "/users", element: <Users /> },
-      { path: "/orders", element: <Orders /> },
+      { path: "/earnings", element: <Earnings /> },
       { path: "/support-ticket", element: <SupportTicket /> },
       { path: "/banners", element: <Banners /> },
       { path: "/blog", element: <Blog /> },

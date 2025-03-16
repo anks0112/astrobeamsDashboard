@@ -1,17 +1,16 @@
 import React from "react";
 import { Modal, Box, Typography, Button } from "@mui/material";
 import { useDispatch } from "react-redux";
+import { logoutSuperAdmin } from "../../redux/slices/authSlice";
 // import { logoutSuperAdmin } from "../../Redux/superAdminAuthSlice";
 // import { resetState } from "../../Redux/globalStateSlice";
 
 const LogoutConfirmationModal = ({ open, onClose }) => {
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   const handleLogout = () => {
-    // console.log("loggedOut");
-    // dispatch(logoutSuperAdmin());
-    // dispatch(resetState());
-    onClose(); // Close modal after logout
+    dispatch(logoutSuperAdmin());
+    onClose();
   };
 
   return (

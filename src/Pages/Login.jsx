@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
+import { loginSuperAdmin } from "../redux/slices/authSlice";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,6 +24,9 @@ const Login = () => {
   const navigate = useNavigate();
   const isLoading = false;
   const dispatch = useDispatch();
+  const { isLoggedIn, loading, error } = useSelector(
+    (state) => state.authSlice
+  );
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -44,40 +48,24 @@ const Login = () => {
       super_admin_password: loginData.password,
     };
 
-    // console.log("params=?", params);
-
-    //     dispatch(loginSuperAdmin(params))
-    //       .then((action) => {
-    //         if (action.meta.requestStatus === "fulfilled") {
-    //           if (action.payload.success === 1) {
-    //             toast.success("Login Successful!", {
-    //               position: "top-center",
-    //             });
-    //             console.log(action.meta.requestStatus, action.payload.success);
-    //             navigate("/dashboard");
-    //           } else {
-    //             toast.error("Invalid credentials. Please try again.", {
-    //               position: "top-center",
-    //               // className: "Ctoast",
-    //             });
-    //             console.log("invalid cred");
-    //           }
-    //         } else if (action.meta.requestStatus === "rejected") {
-    //           const errorMessage =
-    //             action.payload?.message || "Invalid credentials. Please try again.";
-    //           console.log("rejected");
-    //           toast.error(errorMessage, {
-    //             position: "top-center",
-    //             className: "Ctoast",
-    //           });
-    //         }
-    //       })
-    //       .catch((err) => {
-    //         console.error("An unexpected error occurred:", err);
-    //         toast.error("Something went wrong. Please try again later.", {
-    //           position: "top-center",
-    //         });
-    //       });
+    dispatch(loginSuperAdmin(params))
+      .then((action) => {
+        if (action.meta.requestStatus === "fulfilled") {
+          toast.success("Login Successful!", { position: "top-center" });
+          navigate("/dashboard");
+        } else {
+          toast.error(
+            action.payload || "Invalid credentials. Please try again.",
+            { position: "top-center" }
+          );
+        }
+      })
+      .catch((err) => {
+        console.error("An unexpected error occurred:", err);
+        toast.error(err.msg, {
+          position: "top-center",
+        });
+      });
   };
 
   return (
@@ -138,7 +126,7 @@ const Login = () => {
             sx={styles.loginButton}
             // disabled={isLoading}
           >
-            {isLoading ? (
+            {loading ? (
               <CircularProgress size={24} sx={{ color: "#ffffff" }} />
             ) : (
               "Login"
@@ -177,7 +165,8 @@ const styles = {
     marginBottom: "20px",
   },
   logo: {
-    width: "10vw",
+    width: "130px",
+    height: "40px",
   },
   title: {
     fontWeight: "bold",

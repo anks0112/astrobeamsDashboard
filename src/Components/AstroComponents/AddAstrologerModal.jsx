@@ -10,14 +10,19 @@ import {
   FormControl,
   Select,
   InputLabel,
+  CircularProgress,
 } from "@mui/material";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import api from "../../utils/api";
 import { createAstrologer } from "../../redux/slices/createAstrologer";
 import { astrologerSchema } from "../../utils/zodSchema";
+import { useLocation, useSearchParams } from "react-router";
+import { toast } from "react-toastify";
 
 const AddAstrologerModal = ({ open, handleClose }) => {
+  const location = useLocation();
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false); // ✅ Add loading state
 
   const [formData, setFormData] = useState({
     email: "",
@@ -31,7 +36,7 @@ const AddAstrologerModal = ({ open, handleClose }) => {
     experience: "",
     expertise: [],
     language: "",
-    featured: "",
+    featured: false,
     bank_details: { bank_name: "", ifsc: "", account_number: "" }, // JSON object
     voice_call_price: "",
     chat_price: "",
@@ -128,6 +133,7 @@ const AddAstrologerModal = ({ open, handleClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); // ✅ Start loading state
 
     const formattedPhone =
       formData.phone.length === 10 ? `+91${formData.phone}` : "";
@@ -138,8 +144,32 @@ const AddAstrologerModal = ({ open, handleClose }) => {
     };
 
     console.log("✅ Valid Data:", requestData);
-    dispatch(createAstrologer(requestData));
-    handleClose();
+    dispatch(createAstrologer(requestData))
+      .unwrap()
+      .then((response) => {
+        if (response.success === 1) {
+          toast.success("Astrologer created successfully!", {
+            position: "top-center",
+            autoClose: 3000,
+          });
+          handleClose();
+          window.location.reload();
+        } else {
+          toast.error(response.msg || "Something went wrong!", {
+            position: "top-center",
+            autoClose: 3000,
+          });
+        }
+      })
+      .catch((error) => {
+        toast.error(error.msg || "Failed to create astrologer.", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+      })
+      .finally(() => {
+        setLoading(false); // ✅ Reset loading state
+      });
   };
 
   return (
@@ -447,8 +477,13 @@ const AddAstrologerModal = ({ open, handleClose }) => {
               type="submit"
               variant="contained"
               sx={{ backgroundColor: "#ff9800" }}
+              disabled={loading} // ✅ Disable button while loading
             >
-              Submit
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: "#ffffff" }} />
+              ) : (
+                "Submit"
+              )}
             </Button>
           </Box>
         </form>
