@@ -60,8 +60,8 @@ const AstrologersTableView = ({ astrologers }) => {
   };
 
   const [activeStates, setActiveStates] = useState(() => {
-    return astrologers.reduce((acc, astrologer) => {
-      acc[astrologer._id] = astrologer.is_active ?? false; // ✅ Using `_id` as key
+    return (astrologers || []).reduce((acc, astrologer) => {
+      acc[astrologer._id] = astrologer.is_active ?? false;
       return acc;
     }, {});
   });
@@ -75,8 +75,8 @@ const AstrologersTableView = ({ astrologers }) => {
 
   const filteredAstrologers =
     location.pathname === "/dashboard"
-      ? astrologers.filter((astro) => astro.is_active) // ✅ Only Active Astrologers
-      : astrologers;
+      ? (astrologers || []).filter((astro) => astro.is_active)
+      : astrologers || [];
 
   const rows = filteredAstrologers.map((astrologer) => ({
     id: astrologer._id,
