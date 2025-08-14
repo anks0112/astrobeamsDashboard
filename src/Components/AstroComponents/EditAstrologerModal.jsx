@@ -517,7 +517,7 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
                 }}
               />
             </Grid>
-            <Grid item xs={6}>
+            {/* <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="Offer Id"
@@ -525,7 +525,7 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
                 value={formData.offer_id}
                 onChange={handleChange}
               />
-            </Grid>
+            </Grid> */}
           </Grid>
 
           {/* Documents Upload */}
