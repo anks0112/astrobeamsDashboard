@@ -82,9 +82,23 @@ const BlogsTableView = ({ blogs }) => {
       field: "title",
       headerName: "Title",
       flex: 1.5,
-      minWidth: 100,
+      minWidth: 400,
       align: "center",
       headerAlign: "center",
+      renderCell: (params) => (
+        <span
+          style={{
+            display: "block",
+            width: "100%",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+          title={params.value} // shows full title on hover
+        >
+          {params.value}
+        </span>
+      ),
     },
     {
       field: "photo",
@@ -175,7 +189,11 @@ const BlogsTableView = ({ blogs }) => {
     })) || [];
 
   const renderHeader = (
-    <Stack direction="row" justifyContent={"space-between"} sx={{ mb: 2 }}>
+    <Stack
+      direction="row"
+      justifyContent={"space-between"}
+      sx={{ mb: 2, overflowY: "auto" }}
+    >
       <Typography
         variant="h6"
         sx={{ fontWeight: "bold", marginBottom: "20px" }}

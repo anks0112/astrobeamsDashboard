@@ -42,6 +42,9 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
     offer_id: "None", // Default empty string
     language: "", // Default empty string
     featured: false, // Default false
+    aadhar: "",
+    pan: "",
+    passbook_photo: "",
   });
 
   useEffect(() => {
@@ -174,6 +177,9 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
       "offer_id",
       "language",
       "featured",
+      "aadhar",
+      "pan",
+      "passbook_photo",
     ];
 
     // Filter out unwanted fields from formData
@@ -184,7 +190,7 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
       return acc;
     }, {});
 
-    console.log(filteredFormData);
+    // console.log(filteredFormData);
 
     try {
       const response = await api.patch(
@@ -526,7 +532,7 @@ const EditAstrologerModal = ({ open, handleClose, astrologerId }) => {
           <Typography variant="h6" sx={styles.sectionHeading}>
             Upload Files
           </Typography>
-          {["profile_photo"].map((field) => (
+          {["profile_photo", "aadhar", "pan", "passbook_photo"].map((field) => (
             <Grid item xs={12} key={field}>
               {formData[field] && (
                 <>

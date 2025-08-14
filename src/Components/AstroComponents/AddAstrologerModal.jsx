@@ -15,7 +15,6 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../utils/api";
 import { createAstrologer } from "../../redux/slices/createAstrologer";
-import { astrologerSchema } from "../../utils/zodSchema";
 import { useLocation, useSearchParams } from "react-router";
 import { toast } from "react-toastify";
 

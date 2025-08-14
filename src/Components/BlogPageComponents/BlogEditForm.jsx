@@ -46,19 +46,24 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  // Populate form and editor when selectedBlog changes
+  // extra editor state (UI-only; core logic unchanged)
+  const [textColor, setTextColor] = useState("#000000");
+  const [bgColor, setBgColor] = useState("#ffff00");
+  const [stripOnPaste, setStripOnPaste] = useState(false);
+
+  // populate form + editor when blog changes
   useEffect(() => {
     if (selectedBlog) {
       setFormData({
         title: selectedBlog.title,
         photo: selectedBlog.photo,
         description: selectedBlog.description,
-        tags: selectedBlog.tags.join(", "),
+        tags: (selectedBlog.tags || []).join(", "),
       });
-      setImageFile(selectedBlog.photo);
+      setImageFile(selectedBlog.photo || null);
       setTimeout(() => {
         if (editorRef.current) {
-          editorRef.current.innerHTML = selectedBlog.description;
+          editorRef.current.innerHTML = selectedBlog.description || "";
         }
       }, 0);
     }
@@ -67,19 +72,28 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
   const handleChange = (e) =>
     setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  // execCommand + sync HTML
+  const focusEditor = () => {
+    if (editorRef.current) editorRef.current.focus();
+  };
+
+  // execCommand + sync HTML (kept)
   const exec = (cmd, val = null) => {
+    focusEditor();
     document.execCommand(cmd, false, val);
     setFormData((f) => ({
       ...f,
-      description: editorRef.current?.innerHTML,
+      description: editorRef.current?.innerHTML || "",
     }));
   };
 
+  const applyBlock = (tag) => exec("formatBlock", tag); // 'P','H1','H2','BLOCKQUOTE','PRE'
+
   const handleLink = () => {
-    const url = prompt("Enter URL", "https://");
+    const url = window.prompt("Enter URL", "https://");
     if (url) exec("createLink", url);
   };
+
+  const handleUnlink = () => exec("unlink");
 
   const handleFontSizeChange = (e) => {
     const size = e.target.value;
@@ -89,10 +103,11 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
   };
 
   const handleInsertTable = () => {
-    const rows = parseInt(prompt("Rows", "2"), 10);
-    const cols = parseInt(prompt("Cols", "2"), 10);
+    const rows = parseInt(window.prompt("Rows", "2"), 10);
+    const cols = parseInt(window.prompt("Cols", "2"), 10);
     if (rows > 0 && cols > 0) {
-      let html = '<table style="width:100%;border-collapse:collapse;" border="1">';
+      let html =
+        '<table style="width:100%;border-collapse:collapse;" border="1">';
       for (let r = 0; r < rows; r++) {
         html += "<tr>";
         for (let c = 0; c < cols; c++) {
@@ -105,8 +120,26 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
     }
   };
 
+  const insertInlineCode = () => {
+    const selected = window.getSelection()?.toString() || "inline code";
+    exec("insertHTML", `<code>${selected}</code>`);
+  };
+
+  const insertCodeBlock = () => {
+    const selected = window.getSelection()?.toString() || "code block";
+    exec(
+      "insertHTML",
+      `<pre style="padding:12px;border-radius:8px;background:#f6f8fa;overflow:auto;">${selected}</pre>`
+    );
+  };
+
+  const insertImageByUrl = () => {
+    const url = window.prompt("Image URL (https://...)", "");
+    if (url) exec("insertImage", url);
+  };
+
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
     const fd = new FormData();
     fd.append("file", file);
@@ -157,6 +190,46 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
     }
   };
 
+  // keep state in sync while typing
+  const syncFromEditor = () =>
+    setFormData((f) => ({
+      ...f,
+      description: editorRef.current?.innerHTML || "",
+    }));
+
+  // shortcuts
+  const onEditorKeyDown = (e) => {
+    const isMac = navigator.platform.toUpperCase().includes("MAC");
+    const mod = isMac ? e.metaKey : e.ctrlKey;
+    const key = e.key.toLowerCase();
+    if (mod && key === "b") {
+      e.preventDefault();
+      exec("bold");
+    } else if (mod && key === "i") {
+      e.preventDefault();
+      exec("italic");
+    } else if (mod && key === "u") {
+      e.preventDefault();
+      exec("underline");
+    }
+  };
+
+  // optional: paste as plain text
+  const onEditorPaste = (e) => {
+    if (!stripOnPaste) return;
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    exec("insertText", text);
+  };
+
+  // counts
+  const getCounts = () => {
+    const plain = editorRef.current?.innerText || "";
+    const words = (plain.trim().match(/\S+/g) || []).length;
+    const chars = plain.length;
+    return { words, chars };
+  };
+
   return (
     <Modal open={open} onClose={handleClose}>
       <Box
@@ -170,6 +243,7 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
+          maxHeight: "100vh",
           overflowY: "auto",
         }}
       >
@@ -205,7 +279,7 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
             />
           </Stack>
 
-          {/* toolbar */}
+          {/* Enhanced Toolbar to match Create form features (logic unchanged) */}
           <Box
             sx={{
               border: "1px solid rgba(0,0,0,0.23)",
@@ -214,10 +288,29 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
               px: 1,
               py: 0.5,
               display: "flex",
-              gap: 1,
+              flexWrap: "wrap",
               alignItems: "center",
+              gap: 1,
             }}
           >
+            {/* Block / Size */}
+            <TextField
+              select
+              size="small"
+              label="Block"
+              SelectProps={{ native: true }}
+              onChange={(e) => applyBlock(e.target.value)}
+              sx={{ minWidth: 120 }}
+            >
+              <option value="P">Paragraph</option>
+              <option value="H1">Heading 1</option>
+              <option value="H2">Heading 2</option>
+              <option value="H3">Heading 3</option>
+              <option value="H4">Heading 4</option>
+              <option value="BLOCKQUOTE">Quote</option>
+              <option value="PRE">Code Block</option>
+            </TextField>
+
             <FormControl size="small">
               <InputLabel>Size</InputLabel>
               <Select
@@ -235,6 +328,8 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
                 <MenuItem value="7">36px</MenuItem>
               </Select>
             </FormControl>
+
+            {/* Inline */}
             <Tooltip title="Bold">
               <IconButton onClick={() => exec("bold")}>
                 <FormatBoldIcon />
@@ -250,6 +345,27 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
                 <FormatUnderlinedIcon />
               </IconButton>
             </Tooltip>
+            <Tooltip title="Strikethrough">
+              <IconButton onClick={() => exec("strikeThrough")}>
+                <span
+                  style={{ textDecoration: "line-through", fontWeight: 600 }}
+                >
+                  S
+                </span>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Superscript">
+              <IconButton onClick={() => exec("superscript")}>
+                <span style={{ verticalAlign: "super", fontSize: 12 }}>x</span>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Subscript">
+              <IconButton onClick={() => exec("subscript")}>
+                <span style={{ verticalAlign: "sub", fontSize: 12 }}>x</span>
+              </IconButton>
+            </Tooltip>
+
+            {/* Lists */}
             <Tooltip title="Bulleted list">
               <IconButton onClick={() => exec("insertUnorderedList")}>
                 <FormatListBulletedIcon />
@@ -260,16 +376,106 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
                 <FormatListNumberedIcon />
               </IconButton>
             </Tooltip>
+
+            {/* Indent / Outdent */}
+            <Tooltip title="Indent">
+              <IconButton onClick={() => exec("indent")}>⟶</IconButton>
+            </Tooltip>
+            <Tooltip title="Outdent">
+              <IconButton onClick={() => exec("outdent")}>⟵</IconButton>
+            </Tooltip>
+
+            {/* Align */}
+            <Tooltip title="Align Left">
+              <IconButton onClick={() => exec("justifyLeft")}>L</IconButton>
+            </Tooltip>
+            <Tooltip title="Center">
+              <IconButton onClick={() => exec("justifyCenter")}>C</IconButton>
+            </Tooltip>
+            <Tooltip title="Align Right">
+              <IconButton onClick={() => exec("justifyRight")}>R</IconButton>
+            </Tooltip>
+            <Tooltip title="Justify">
+              <IconButton onClick={() => exec("justifyFull")}>J</IconButton>
+            </Tooltip>
+
+            {/* Link + Table + Unlink */}
             <Tooltip title="Link">
               <IconButton onClick={handleLink}>
                 <LinkIcon />
               </IconButton>
+            </Tooltip>
+            <Tooltip title="Unlink">
+              <IconButton onClick={handleUnlink}>⛓️‍⬛</IconButton>
             </Tooltip>
             <Tooltip title="Table">
               <IconButton onClick={handleInsertTable}>
                 <TableRowsIcon />
               </IconButton>
             </Tooltip>
+
+            {/* Code */}
+            <Tooltip title="Inline Code">
+              <IconButton onClick={insertInlineCode}>{`</>`}</IconButton>
+            </Tooltip>
+            <Tooltip title="Code Block">
+              <IconButton onClick={insertCodeBlock}>▦</IconButton>
+            </Tooltip>
+
+            {/* HR & Clear */}
+            <Tooltip title="Horizontal Rule">
+              <IconButton onClick={() => exec("insertHorizontalRule")}>
+                —
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Clear Formatting">
+              <IconButton onClick={() => exec("removeFormat")}>🧹</IconButton>
+            </Tooltip>
+
+            {/* Colors */}
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{ ml: 1 }}
+            >
+              <label style={{ fontSize: 12 }}>Text</label>
+              <input
+                aria-label="Text color"
+                type="color"
+                value={textColor}
+                onChange={(e) => {
+                  setTextColor(e.target.value);
+                  exec("foreColor", e.target.value);
+                }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+              />
+              <label style={{ fontSize: 12 }}>Highlight</label>
+              <input
+                aria-label="Highlight color"
+                type="color"
+                value={bgColor}
+                onChange={(e) => {
+                  setBgColor(e.target.value);
+                  exec("hiliteColor", e.target.value);
+                }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+              />
+            </Stack>
+
+            {/* Undo / Redo */}
             <Tooltip title="Undo">
               <IconButton onClick={() => exec("undo")}>
                 <UndoIcon />
@@ -280,6 +486,24 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
                 <RedoIcon />
               </IconButton>
             </Tooltip>
+
+            {/* Extras (right side) */}
+            {/* <Stack
+              direction="row"
+              spacing={1}
+              sx={{ ml: "auto", alignItems: "center" }}
+            >
+              <Button
+                size="small"
+                variant={stripOnPaste ? "contained" : "outlined"}
+                onClick={() => setStripOnPaste((s) => !s)}
+              >
+                Paste as text
+              </Button>
+              <Button size="small" onClick={insertImageByUrl}>
+                Image URL
+              </Button>
+            </Stack> */}
           </Box>
 
           {/* scrollable editor */}
@@ -287,31 +511,59 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
             sx={{
               border: "1px solid rgba(0,0,0,0.23)",
               borderRadius: "0 0 4px 4px",
-              height: 200,
+              height: 260,
               overflowY: "auto",
-              mb: 2,
+              mb: 1.5,
             }}
           >
             <Box
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
-              onInput={() =>
-                setFormData((f) => ({
-                  ...f,
-                  description: editorRef.current.innerHTML,
-                }))
-              }
-              sx={{ minHeight: "100%", p: 1, outline: "none" }}
+              onInput={syncFromEditor}
+              onKeyDown={onEditorKeyDown}
+              onPaste={onEditorPaste}
+              sx={{
+                minHeight: "100%",
+                p: 1.25,
+                outline: "none",
+                "& pre": {
+                  fontFamily:
+                    "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                },
+                "& code": {
+                  background: "rgba(2, 122, 255, 0.08)",
+                  borderRadius: "4px",
+                  padding: "0 4px",
+                },
+                "& blockquote": {
+                  borderLeft: "4px solid #ddd",
+                  margin: "8px 0",
+                  padding: "6px 10px",
+                  color: "text.secondary",
+                },
+              }}
             />
           </Box>
+
+          <Typography variant="caption" color="text.secondary">
+            {(() => {
+              const { words, chars } = getCounts();
+              return `Words: ${words} • Characters: ${chars}`;
+            })()}
+          </Typography>
 
           {imageFile && (
             <Box sx={{ textAlign: "left", mt: 1 }}>
               <img
                 src={imageFile}
                 alt="Uploaded Preview"
-                style={{ width: "50%", height: "10vh", borderRadius: 8 }}
+                style={{
+                  width: "50%",
+                  height: "10vh",
+                  borderRadius: 8,
+                  objectFit: "cover",
+                }}
               />
               <Button variant="text" color="error" onClick={handleRemoveImage}>
                 Remove

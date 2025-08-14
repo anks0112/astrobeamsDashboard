@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Box, Button, IconButton, Switch, Typography } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -11,13 +11,93 @@ import EditAstrologerModal from "./EditAstrologerModal";
 
 const AstrologersTableView = ({ astrologers }) => {
   const navigate = useNavigate();
-
   const location = useLocation();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [selectedAstrologerId, setSelectedAstrologerId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false); // ✅ Track Edit Modal Open
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const [statusLoading, setStatusLoading] = useState({});
+
+  // Map of full records so we can send ALL required fields on status toggle
+  const recordById = useMemo(() => {
+    return (astrologers || []).reduce((acc, a) => {
+      acc[a._id] = a;
+      return acc;
+    }, {});
+  }, [astrologers]);
+
+  // Local UI state for switches (optimistic)
+  const [activeStates, setActiveStates] = useState(() =>
+    (astrologers || []).reduce((acc, a) => {
+      acc[a._id] = typeof a.status === "boolean" ? a.status : false;
+      return acc;
+    }, {})
+  );
+
+  const handleToggleStatus = async (id, currentStatus) => {
+    const full = recordById[id];
+
+    // Build payload with ONLY the fields the backend expects (and their existing values)
+    const requiredFields = [
+      "_id",
+      "status",
+      "name",
+      "profile_photo",
+      "gender",
+      "dob",
+      "city",
+      "bio",
+      "experience",
+      "expertise",
+      "voice_call_price",
+      "chat_price",
+      "voice_call_offer_price",
+      "chat_offer_price",
+      "current_balance",
+      "withdrawl_balance",
+      "commission",
+      "offer_id",
+      "language",
+      "featured",
+      "aadhar",
+      "pan",
+      "passbook_photo",
+    ];
+
+    const payload = requiredFields.reduce((acc, key) => {
+      acc[key] = full?.[key]; // use existing value from the record
+      return acc;
+    }, {});
+
+    // Always override status with the toggled value
+    payload._id = id;
+    payload.status = !currentStatus;
+
+    setStatusLoading((m) => ({ ...m, [id]: true }));
+    // optimistic flip
+    setActiveStates((prev) => ({ ...prev, [id]: !currentStatus }));
+
+    try {
+      await api.patch("/super_admin/backend/update_astrologer", payload);
+      toast.success("Status updated", {
+        position: "top-center",
+        autoClose: 1500,
+      });
+    } catch (err) {
+      // revert optimistic update
+      setActiveStates((prev) => ({ ...prev, [id]: currentStatus }));
+      console.error(err);
+      toast.error("Failed to update status", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+    } finally {
+      setStatusLoading((m) => ({ ...m, [id]: false }));
+    }
+  };
 
   const isDashboard = location.pathname === "/dashboard";
 
@@ -26,19 +106,13 @@ const AstrologersTableView = ({ astrologers }) => {
       toast.error("No Astrologer selected for deletion!");
       return;
     }
-    setLoading(true); // Start loading spinner
-
+    setLoading(true);
     try {
       const response = await api.post(
         "/super_admin/backend/delete_astrologer",
-        { astrologerId: selectedAstrologerId }, // ✅ Sending data directly in body
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { astrologerId: selectedAstrologerId },
+        { headers: { "Content-Type": "application/json" } }
       );
-
       if (response.status === 200) {
         toast.success("Astrologer deleted successfully!", {
           position: "top-center",
@@ -55,22 +129,8 @@ const AstrologersTableView = ({ astrologers }) => {
       });
       setOpenModal(false);
     } finally {
-      setLoading(false); // Stop loading spinner after API response
+      setLoading(false);
     }
-  };
-
-  const [activeStates, setActiveStates] = useState(() => {
-    return (astrologers || []).reduce((acc, astrologer) => {
-      acc[astrologer._id] = astrologer.is_active ?? false;
-      return acc;
-    }, {});
-  });
-
-  const handleToggleActive = (id) => {
-    setActiveStates((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
   };
 
   const filteredAstrologers =
@@ -78,14 +138,15 @@ const AstrologersTableView = ({ astrologers }) => {
       ? (astrologers || []).filter((astro) => astro.is_active)
       : astrologers || [];
 
-  const rows = filteredAstrologers.map((astrologer) => ({
-    id: astrologer._id,
-    name: astrologer.name || "-",
-    email: astrologer.email || "-",
-    city: astrologer.city || "-",
-    phone: astrologer.phone || "-",
-    current_balance: astrologer.current_balance || "-",
-    is_active: astrologer.is_active || false,
+  const rows = filteredAstrologers.map((a) => ({
+    id: a._id,
+    name: a.name || "-",
+    email: a.email || "-",
+    city: a.city || "-",
+    phone: a.phone || "-",
+    current_balance: a.current_balance ?? "-",
+    status:
+      activeStates[a._id] ?? (typeof a.status === "boolean" ? a.status : false),
   }));
 
   const columns = [
@@ -117,28 +178,29 @@ const AstrologersTableView = ({ astrologers }) => {
       align: "center",
       headerAlign: "center",
     },
-    // {
-    //   field: "active",
-    //   headerName: "Active",
-    //   flex: 0.5,
-    //   align: "center",
-    //   headerAlign: "center",
-    //   renderCell: (params) => (
-    //     <Switch
-    //       checked={Boolean(activeStates[params.row.id])} // Ensures true/false, never undefined
-    //       onChange={() => handleToggleActive(params.row.id)}
-    //       sx={{
-    //         "& .MuiSwitch-switchBase.Mui-checked": {
-    //           color: "#ff9800", // Orange color when checked
-    //         },
-    //         "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-    //           backgroundColor: "#ff9800", // Track color when checked
-    //         },
-    //       }}
-    //     />
-    //   ),
-    // },
-
+    {
+      field: "status",
+      headerName: "Status",
+      flex: 0.7,
+      align: "center",
+      headerAlign: "center",
+      sortable: false,
+      renderCell: (params) => (
+        <Switch
+          checked={Boolean(params.row.status)}
+          onChange={() =>
+            handleToggleStatus(params.row.id, Boolean(params.row.status))
+          }
+          disabled={Boolean(statusLoading[params.row.id])}
+          sx={{
+            "& .MuiSwitch-switchBase.Mui-checked": { color: "#ff9800" },
+            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+              backgroundColor: "#ff9800",
+            },
+          }}
+        />
+      ),
+    },
     {
       field: "current_balance",
       headerName: "Current Balance",
@@ -167,8 +229,8 @@ const AstrologersTableView = ({ astrologers }) => {
             size="small"
             sx={{ color: "#ff9800" }}
             onClick={() => {
-              setSelectedAstrologerId(params.row.id); // Store the astrologer ID
-              setOpenModal(true); // Open confirmation modal
+              setSelectedAstrologerId(params.row.id);
+              setOpenModal(true);
             }}
           >
             <Delete />
@@ -177,8 +239,8 @@ const AstrologersTableView = ({ astrologers }) => {
             size="small"
             sx={{ color: "#ff9800" }}
             onClick={() => {
-              setSelectedAstrologerId(params.row.id); // ✅ Store astrologer ID
-              setEditModalOpen(true); // ✅ Open edit modal
+              setSelectedAstrologerId(params.row.id);
+              setEditModalOpen(true);
             }}
           >
             <Edit />
@@ -214,6 +276,7 @@ const AstrologersTableView = ({ astrologers }) => {
           </Button>
         )}
       </Box>
+
       <Box
         sx={{
           borderRadius: "10px",
@@ -240,9 +303,7 @@ const AstrologersTableView = ({ astrologers }) => {
           disableDensitySelector
           disableColumnSelector
           sx={{
-            "& .MuiDataGrid-root": {
-              textAlign: "center",
-            },
+            "& .MuiDataGrid-root": { textAlign: "center" },
             "& .MuiDataGrid-columnHeader": {
               backgroundColor: "#FEF2E7",
               fontWeight: "bold",
@@ -273,12 +334,13 @@ const AstrologersTableView = ({ astrologers }) => {
         handleConfirm={handleDelete}
         title="Delete Astrologer"
         message="Are you sure you want to delete this Astrologer? This action cannot be undone."
-        loading={loading} // ✅ Pass loading state to modal
+        loading={loading}
       />
+
       <EditAstrologerModal
-        open={editModalOpen} // ✅ Controls modal visibility
-        handleClose={() => setEditModalOpen(false)} // ✅ Close modal function
-        astrologerId={selectedAstrologerId} // ✅ Pass astrologer ID to the modal
+        open={editModalOpen}
+        handleClose={() => setEditModalOpen(false)}
+        astrologerId={selectedAstrologerId}
       />
     </Box>
   );

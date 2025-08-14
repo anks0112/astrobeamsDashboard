@@ -37,16 +37,45 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  const handleChange = (e) =>
-    setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
+  // ===== New editor enhancement state (no logic change to submit/upload) =====
+  const [textColor, setTextColor] = useState("#000000");
+  const [bgColor, setBgColor] = useState("#ffff00");
+  const [stripOnPaste, setStripOnPaste] = useState(false);
 
-  // Execute formatting command and sync HTML back to state
+  const handleChange = (e) =>
+    setFormData((f) => ({
+      ...f,
+      [e.target.name]: e.target.value,
+    }));
+
+  // Focus helper so commands apply inside editor
+  const focusEditor = () => {
+    if (editorRef.current) editorRef.current.focus();
+  };
+
+  // Execute formatting command and sync HTML back to state (kept from original, enhanced)
   const exec = (cmd, val = null) => {
+    focusEditor();
     document.execCommand(cmd, false, val);
     setFormData((f) => ({
       ...f,
-      description: editorRef.current.innerHTML,
+      description: editorRef.current?.innerHTML || "",
     }));
+  };
+
+  const applyBlock = (tag) => exec("formatBlock", tag); // 'P','H1','H2','BLOCKQUOTE','PRE'
+
+  const insertInlineCode = () => {
+    const selected = window.getSelection()?.toString() || "inline code";
+    exec("insertHTML", `<code>${selected}</code>`);
+  };
+
+  const insertCodeBlock = () => {
+    const selected = window.getSelection()?.toString() || "code block";
+    exec(
+      "insertHTML",
+      `<pre style="padding:12px;border-radius:8px;background:#f6f8fa;overflow:auto;">${selected}</pre>`
+    );
   };
 
   const handleLink = () => {
@@ -54,8 +83,15 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
     if (url) exec("createLink", url);
   };
 
+  const handleUnlink = () => exec("unlink");
+
+  const insertImageByUrl = () => {
+    const url = window.prompt("Image URL (https://...)", "");
+    if (url) exec("insertImage", url);
+  };
+
   const handleUploadImage = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
     const fd = new FormData();
     fd.append("file", file);
@@ -92,7 +128,7 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
       });
       refreshData?.();
       setFormData({ title: "", photo: "", description: "", tags: "" });
-      editorRef.current.innerHTML = "";
+      if (editorRef.current) editorRef.current.innerHTML = "";
       toast.success("Blog created successfully!", { autoClose: 3000 });
       setTimeout(() => window.location.reload(), 3000);
     } catch {
@@ -100,6 +136,46 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Keep state synced when typing in the editor
+  const syncFromEditor = () =>
+    setFormData((f) => ({
+      ...f,
+      description: editorRef.current?.innerHTML || "",
+    }));
+
+  // Keyboard shortcuts (Cmd/Ctrl+B/I/U)
+  const onEditorKeyDown = (e) => {
+    const isMac = navigator.platform.toUpperCase().includes("MAC");
+    const mod = isMac ? e.metaKey : e.ctrlKey;
+    const key = e.key.toLowerCase();
+    if (mod && key === "b") {
+      e.preventDefault();
+      exec("bold");
+    } else if (mod && key === "i") {
+      e.preventDefault();
+      exec("italic");
+    } else if (mod && key === "u") {
+      e.preventDefault();
+      exec("underline");
+    }
+  };
+
+  // Optional: paste as plain text toggle
+  const onEditorPaste = (e) => {
+    if (!stripOnPaste) return;
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    exec("insertText", text);
+  };
+
+  // Live counts
+  const getCounts = () => {
+    const plain = editorRef.current?.innerText || "";
+    const words = (plain.trim().match(/\S+/g) || []).length;
+    const chars = plain.length;
+    return { words, chars };
   };
 
   return (
@@ -115,6 +191,7 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
+          maxHeight: "100vh",
           overflowY: "auto",
         }}
       >
@@ -125,7 +202,9 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
           Create New Blog
         </Typography>
 
-        {message.text && <Alert severity={message.type}>{message.text}</Alert>}
+        {message.text && (
+          <Alert severity={message.type || "info"}>{message.text}</Alert>
+        )}
 
         <form onSubmit={handleSubmit}>
           <Stack direction="row" spacing={2}>
@@ -150,7 +229,7 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
             />
           </Stack>
 
-          {/* MUI toolbar */}
+          {/* ===== Enhanced Toolbar (keeps original actions + adds full editor controls) ===== */}
           <Box
             sx={{
               border: "1px solid rgba(0,0,0,0.23)",
@@ -159,9 +238,30 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
               px: 1,
               py: 0.5,
               display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
               gap: 1,
             }}
           >
+            {/* Block format */}
+            <TextField
+              select
+              size="small"
+              label="Block"
+              SelectProps={{ native: true }}
+              onChange={(e) => applyBlock(e.target.value)}
+              sx={{ minWidth: 120 }}
+            >
+              <option value="P">Paragraph</option>
+              <option value="H1">Heading 1</option>
+              <option value="H2">Heading 2</option>
+              <option value="H3">Heading 3</option>
+              <option value="H4">Heading 4</option>
+              <option value="BLOCKQUOTE">Quote</option>
+              <option value="PRE">Code Block</option>
+            </TextField>
+
+            {/* Inline formatting (original) */}
             <Tooltip title="Bold">
               <IconButton onClick={() => exec("bold")}>
                 <FormatBoldIcon />
@@ -177,6 +277,29 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
                 <FormatUnderlinedIcon />
               </IconButton>
             </Tooltip>
+
+            {/* Extra inline */}
+            <Tooltip title="Strikethrough">
+              <IconButton onClick={() => exec("strikeThrough")}>
+                <span
+                  style={{ textDecoration: "line-through", fontWeight: 600 }}
+                >
+                  S
+                </span>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Superscript">
+              <IconButton onClick={() => exec("superscript")}>
+                <span style={{ verticalAlign: "super", fontSize: 12 }}>x</span>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Subscript">
+              <IconButton onClick={() => exec("subscript")}>
+                <span style={{ verticalAlign: "sub", fontSize: 12 }}>x</span>
+              </IconButton>
+            </Tooltip>
+
+            {/* Lists (original) */}
             <Tooltip title="Bulleted list">
               <IconButton onClick={() => exec("insertUnorderedList")}>
                 <FormatListBulletedIcon />
@@ -187,11 +310,101 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
                 <FormatListNumberedIcon />
               </IconButton>
             </Tooltip>
+
+            {/* Indent / Outdent */}
+            <Tooltip title="Indent">
+              <IconButton onClick={() => exec("indent")}>⟶</IconButton>
+            </Tooltip>
+            <Tooltip title="Outdent">
+              <IconButton onClick={() => exec("outdent")}>⟵</IconButton>
+            </Tooltip>
+
+            {/* Alignment */}
+            <Tooltip title="Align Left">
+              <IconButton onClick={() => exec("justifyLeft")}>L</IconButton>
+            </Tooltip>
+            <Tooltip title="Center">
+              <IconButton onClick={() => exec("justifyCenter")}>C</IconButton>
+            </Tooltip>
+            <Tooltip title="Align Right">
+              <IconButton onClick={() => exec("justifyRight")}>R</IconButton>
+            </Tooltip>
+            <Tooltip title="Justify">
+              <IconButton onClick={() => exec("justifyFull")}>J</IconButton>
+            </Tooltip>
+
+            {/* Links (original + unlink) */}
             <Tooltip title="Link">
               <IconButton onClick={handleLink}>
                 <LinkIcon />
               </IconButton>
             </Tooltip>
+            <Tooltip title="Unlink">
+              <IconButton onClick={handleUnlink}>⛓️‍⬛</IconButton>
+            </Tooltip>
+
+            {/* Code */}
+            <Tooltip title="Inline Code">
+              <IconButton onClick={insertInlineCode}>{`</>`}</IconButton>
+            </Tooltip>
+            <Tooltip title="Code Block">
+              <IconButton onClick={insertCodeBlock}>▦</IconButton>
+            </Tooltip>
+
+            {/* HR & Clear */}
+            <Tooltip title="Horizontal Rule">
+              <IconButton onClick={() => exec("insertHorizontalRule")}>
+                —
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Clear Formatting">
+              <IconButton onClick={() => exec("removeFormat")}>🧹</IconButton>
+            </Tooltip>
+
+            {/* Colors */}
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{ ml: 1 }}
+            >
+              <label style={{ fontSize: 12 }}>Text</label>
+              <input
+                aria-label="Text color"
+                type="color"
+                value={textColor}
+                onChange={(e) => {
+                  setTextColor(e.target.value);
+                  exec("foreColor", e.target.value);
+                }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+              />
+              <label style={{ fontSize: 12 }}>Highlight</label>
+              <input
+                aria-label="Highlight color"
+                type="color"
+                value={bgColor}
+                onChange={(e) => {
+                  setBgColor(e.target.value);
+                  exec("hiliteColor", e.target.value);
+                }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+              />
+            </Stack>
+
+            {/* Undo / Redo (original) */}
             <Tooltip title="Undo">
               <IconButton onClick={() => exec("undo")}>
                 <UndoIcon />
@@ -202,39 +415,86 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
                 <RedoIcon />
               </IconButton>
             </Tooltip>
+
+            {/* Extras on the right */}
+            {/* <Stack
+              direction="row"
+              spacing={1}
+              sx={{ ml: "auto", alignItems: "center" }}
+            >
+              <Button
+                size="small"
+                variant={stripOnPaste ? "contained" : "outlined"}
+                onClick={() => setStripOnPaste((s) => !s)}
+              >
+                Paste as text
+              </Button>
+              <Button size="small" onClick={insertImageByUrl}>
+                Image URL
+              </Button>
+            </Stack> */}
           </Box>
 
-          {/* Scrollable editor area */}
+          {/* Scrollable editor area (unchanged logic, enhanced UX) */}
           <Box
             sx={{
               border: "1px solid rgba(0,0,0,0.23)",
               borderRadius: "0 0 4px 4px",
-              height: 200,
+              height: 260,
               overflowY: "auto",
-              mb: 2,
+              mb: 1.5,
             }}
           >
             <Box
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
-              onInput={() =>
-                setFormData((f) => ({
-                  ...f,
-                  description: editorRef.current.innerHTML,
-                }))
-              }
-              sx={{ minHeight: "100%", p: 1, outline: "none" }}
+              onInput={syncFromEditor}
+              onKeyDown={onEditorKeyDown}
+              onPaste={onEditorPaste}
+              sx={{
+                minHeight: "100%",
+                p: 1.25,
+                outline: "none",
+                "& pre": {
+                  fontFamily:
+                    "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                },
+                "& code": {
+                  background: "rgba(2, 122, 255, 0.08)",
+                  borderRadius: "4px",
+                  padding: "0 4px",
+                },
+                "& blockquote": {
+                  borderLeft: "4px solid #ddd",
+                  margin: "8px 0",
+                  padding: "6px 10px",
+                  color: "text.secondary",
+                },
+              }}
             />
           </Box>
 
-          {/* Image Preview */}
+          {/* Live counts */}
+          <Typography variant="caption" color="text.secondary">
+            {(() => {
+              const { words, chars } = getCounts();
+              return `Words: ${words} • Characters: ${chars}`;
+            })()}
+          </Typography>
+
+          {/* Image Preview (original) */}
           {imageFile && (
             <Box sx={{ textAlign: "left", mt: 1 }}>
               <img
                 src={imageFile}
                 alt="Uploaded Preview"
-                style={{ width: "50%", height: "10vh", borderRadius: 8 }}
+                style={{
+                  width: "50%",
+                  height: "10vh",
+                  borderRadius: 8,
+                  objectFit: "cover",
+                }}
               />
               <Button variant="text" color="error" onClick={handleRemoveImage}>
                 Remove
@@ -242,17 +502,17 @@ const BlogCreateForm = ({ open, handleClose, refreshData }) => {
             </Box>
           )}
 
-          {/* Upload Photo */}
+          {/* Upload Photo (original) */}
           <Button
             variant="contained"
             component="label"
-            sx={{ mt: 2, mb: 2, backgroundColor: "#ff9800" }}
+            sx={{ m: 2, backgroundColor: "#ff9800" }}
           >
             Upload Photo
             <input type="file" hidden onChange={handleUploadImage} />
           </Button>
 
-          {/* Actions */}
+          {/* Actions (original) */}
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
             <Button
               variant="contained"
