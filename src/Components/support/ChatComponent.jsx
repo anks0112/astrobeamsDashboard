@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { Box, TextField, IconButton, Typography, Paper } from "@mui/material";
-import { Send, AddPhotoAlternate, Height } from "@mui/icons-material";
+import { Send, AddPhotoAlternate } from "@mui/icons-material";
 import PersonIcon from "@mui/icons-material/Person";
 import api from "../../utils/api";
 
@@ -9,6 +9,9 @@ const ChatComponent = ({ support_id, messages, status }) => {
   const fileInputRef = useRef(null);
   const listRef = useRef(null);
   const [message, setMessage] = useState("");
+
+  const statusLower = (status ?? "").toLowerCase();
+  const isClosed = statusLower === "closed";
 
   // 👉 Local state that the UI renders from (kept in sync with prop)
   const [chatMessages, setChatMessages] = useState([]);
@@ -219,7 +222,7 @@ const ChatComponent = ({ support_id, messages, status }) => {
         <IconButton
           onClick={handleClick}
           aria-label="attach image"
-          disabled={status.toLowerCase() === "closed"}
+          disabled={isClosed}
         >
           <AddPhotoAlternate sx={styles.icon} />
           <input
@@ -247,9 +250,7 @@ const ChatComponent = ({ support_id, messages, status }) => {
           onClick={handleSend}
           sx={styles.sendButton}
           aria-label="send message"
-          disabled={
-            !message.trim() || !targetId || status.toLowerCase() === "closed"
-          }
+          disabled={!message.trim() || !targetId || isClosed}
         >
           <Send />
         </IconButton>
