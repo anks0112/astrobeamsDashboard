@@ -5,7 +5,6 @@ import "react-toastify/dist/ReactToastify.css"; // Import styles
 import Navbar from "./Components/Navbar/Navbar";
 import Astrologers from "./Pages/Astrologers";
 import Users from "./Pages/Users";
-import SupportTicket from "./Pages/SupportTicket";
 import Banners from "./Pages/Banners";
 import Sidebar from "./Components/Sidebar/Sidebar";
 import Dashboard from "./Pages/Dashboard";
@@ -17,6 +16,8 @@ import AstrologerView from "./Pages/AstrologerView";
 import Earnings from "./Pages/Earnings";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
+import Support from "./Pages/Support";
+import SupportInner from "./Pages/SupportInner";
 
 // ✅ Layout Component (Navbar, Sidebar & Dynamic Content)
 const Layout = () => {
@@ -62,9 +63,11 @@ const router = createBrowserRouter([
       { path: "/astrologers", element: <Astrologers /> },
       { path: "/users", element: <Users /> },
       { path: "/earnings", element: <Earnings /> },
-      { path: "/support-ticket", element: <SupportTicket /> },
+      { path: "/support", element: <Support /> },
       { path: "/banners", element: <Banners /> },
       { path: "/blog", element: <Blog /> },
+      { path: "/support-ticket/:id", element: <SupportInner /> },
+
       { path: "/blog-inner/:id", element: <BlogPageWrapper /> },
       { path: "/astrologer-view/:id", element: <AstrologerView /> },
     ],

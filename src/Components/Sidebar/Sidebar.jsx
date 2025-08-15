@@ -51,7 +51,7 @@ const Sidebar = () => {
     { text: "Earnings", icon: <CurrencyRupee />, url: "/earnings" },
     { text: "Banners", icon: <BrandingWatermark />, url: "/banners" },
     { text: "Blogs", icon: <ChatRounded />, url: "/blog" },
-    // { text: "Support Ticket", icon: <Support />, url: "/support-ticket" },
+    { text: "Support Ticket", icon: <Support />, url: "/support" },
 
     {
       text: "Sign Out",
