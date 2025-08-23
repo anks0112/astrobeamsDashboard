@@ -134,6 +134,15 @@ const AddAstrologerModal = ({ open, handleClose }) => {
     e.preventDefault();
     setLoading(true); // ✅ Start loading state
 
+    if (!formData.profile_photo) {
+      toast.error("Profile picture is required!", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      setLoading(false);
+      return; // 🚫 Stop submission
+    }
+
     const formattedPhone =
       formData.phone.length === 10 ? `+91${formData.phone}` : "";
 
