@@ -7,7 +7,6 @@ const Users = () => {
   const dispatch = useDispatch();
 
   const { users, loading, error } = useSelector((state) => state.allUsers);
-  console.log(users);
 
   useEffect(() => {
     dispatch(fetchAllCustomers());

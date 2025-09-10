@@ -108,7 +108,7 @@ const AstrologerPricingStatus = ({ astrologer }) => {
           <Typography variant="body1" fontWeight={500}>
             Commission:{" "}
             <Chip
-              label={`₹${astrologer.commission}`}
+              label={`${astrologer.commission}%`}
               sx={{ color: "#ff9800", borderColor: "#ff9800", fontSize: 16 }}
               variant="outlined"
             />
