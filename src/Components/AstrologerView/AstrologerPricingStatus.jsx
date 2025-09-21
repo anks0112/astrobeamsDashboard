@@ -2,6 +2,12 @@ import React from "react";
 import { Box, Typography, Stack, Chip, Grid } from "@mui/material";
 
 const AstrologerPricingStatus = ({ astrologer }) => {
+  // Helper to format currency safely
+  const formatCurrency = (value) =>
+    typeof value === "number"
+      ? value.toFixed(2)
+      : Number(value || 0).toFixed(2);
+
   return (
     <Box
       sx={{
@@ -44,7 +50,7 @@ const AstrologerPricingStatus = ({ astrologer }) => {
           <Typography variant="body1" fontWeight={500}>
             Chat Price:{" "}
             <Chip
-              label={`₹${astrologer.chat_price}`}
+              label={`₹${formatCurrency(astrologer.chat_price)}`}
               sx={{ color: "#ff9800", borderColor: "#ff9800", fontSize: 16 }}
               variant="outlined"
             />
@@ -54,12 +60,8 @@ const AstrologerPricingStatus = ({ astrologer }) => {
           <Typography variant="body1" fontWeight={500}>
             Chat Offer Price:{" "}
             <Chip
-              label={`₹${astrologer.chat_offer_price}`}
-              sx={{
-                color: "#ff9800",
-                borderColor: "#ff9800",
-                fontSize: 16,
-              }}
+              label={`₹${formatCurrency(astrologer.chat_offer_price)}`}
+              sx={{ color: "#ff9800", borderColor: "#ff9800", fontSize: 16 }}
               variant="outlined"
             />
           </Typography>
@@ -68,7 +70,7 @@ const AstrologerPricingStatus = ({ astrologer }) => {
           <Typography variant="body1" fontWeight={500}>
             Voice Call Price:{" "}
             <Chip
-              label={`₹${astrologer.voice_call_price}`}
+              label={`₹${formatCurrency(astrologer.voice_call_price)}`}
               sx={{ color: "#ff9800", borderColor: "#ff9800", fontSize: 16 }}
               variant="outlined"
             />
@@ -78,7 +80,7 @@ const AstrologerPricingStatus = ({ astrologer }) => {
           <Typography variant="body1" fontWeight={500}>
             Voice Call Offer Price:{" "}
             <Chip
-              label={`₹${astrologer.voice_call_offer_price}`}
+              label={`₹${formatCurrency(astrologer.voice_call_offer_price)}`}
               sx={{ color: "#ff9800", borderColor: "#ff9800", fontSize: 16 }}
               variant="outlined"
             />
@@ -88,7 +90,7 @@ const AstrologerPricingStatus = ({ astrologer }) => {
           <Typography variant="body1" fontWeight={500}>
             Current Balance:{" "}
             <Chip
-              label={`₹${astrologer.current_balance}`}
+              label={`₹${formatCurrency(astrologer.current_balance)}`}
               sx={{ color: "#ff9800", borderColor: "#ff9800", fontSize: 16 }}
               variant="outlined"
             />
@@ -98,7 +100,7 @@ const AstrologerPricingStatus = ({ astrologer }) => {
           <Typography variant="body1" fontWeight={500}>
             Withdrawal Balance:{" "}
             <Chip
-              label={`₹${astrologer.withdrawl_balance}`}
+              label={`₹${formatCurrency(astrologer.withdrawl_balance)}`}
               sx={{ color: "#ff9800", borderColor: "#ff9800", fontSize: 16 }}
               variant="outlined"
             />

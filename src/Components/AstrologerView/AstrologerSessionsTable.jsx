@@ -17,6 +17,7 @@ const AstrologerSessionsTable = ({ sessions }) => {
       </Typography>
     </Box>
   );
+
   const columns = [
     {
       field: "customerName",
@@ -92,7 +93,7 @@ const AstrologerSessionsTable = ({ sessions }) => {
     },
   ];
 
-  const rows = sessions?.map((session, index) => ({
+  const rows = sessions?.map((session) => ({
     id: session._id,
     customerName: session.customerName,
     startTime: session.startTime,
@@ -121,6 +122,9 @@ const AstrologerSessionsTable = ({ sessions }) => {
           columns={columns}
           initialState={{
             pagination: { paginationModel: { pageSize: 10 } },
+            sorting: {
+              sortModel: [{ field: "startTime", sort: "desc" }], // ✅ newest first
+            },
           }}
           slotProps={{
             toolbar: {
@@ -134,7 +138,7 @@ const AstrologerSessionsTable = ({ sessions }) => {
           disableDensitySelector
           disableColumnSelector
           rowHeight={60}
-          slots={{ noRowsOverlay: NoRowsOverlay, toolbar: GridToolbar }} // ✅ Fix: Attach Custom No Data Component
+          slots={{ noRowsOverlay: NoRowsOverlay, toolbar: GridToolbar }}
           sx={{
             "& .MuiDataGrid-columnHeader": {
               backgroundColor: "#FEF2E7",
