@@ -1,5 +1,12 @@
 import React, { useMemo, useState } from "react";
-import { Box, Button, IconButton, Switch, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  IconButton,
+  Switch,
+  Typography,
+  Chip,
+} from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Delete, Edit, RemoveRedEye } from "@mui/icons-material";
@@ -18,10 +25,9 @@ const AstrologersTableView = ({ astrologers }) => {
   const [selectedAstrologerId, setSelectedAstrologerId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-
   const [statusLoading, setStatusLoading] = useState({});
 
-  // Map of full records so we can send ALL required fields on status toggle
+  // Map of full records
   const recordById = useMemo(() => {
     return (astrologers || []).reduce((acc, a) => {
       acc[a._id] = a;
@@ -40,7 +46,6 @@ const AstrologersTableView = ({ astrologers }) => {
   const handleToggleStatus = async (id, currentStatus) => {
     const full = recordById[id];
 
-    // Build payload with ONLY the fields the backend expects (and their existing values)
     const requiredFields = [
       "_id",
       "status",
@@ -68,16 +73,14 @@ const AstrologersTableView = ({ astrologers }) => {
     ];
 
     const payload = requiredFields.reduce((acc, key) => {
-      acc[key] = full?.[key]; // use existing value from the record
+      acc[key] = full?.[key];
       return acc;
     }, {});
 
-    // Always override status with the toggled value
     payload._id = id;
     payload.status = !currentStatus;
 
     setStatusLoading((m) => ({ ...m, [id]: true }));
-    // optimistic flip
     setActiveStates((prev) => ({ ...prev, [id]: !currentStatus }));
 
     try {
@@ -87,7 +90,6 @@ const AstrologersTableView = ({ astrologers }) => {
         autoClose: 1500,
       });
     } catch (err) {
-      // revert optimistic update
       setActiveStates((prev) => ({ ...prev, [id]: currentStatus }));
       console.error(err);
       toast.error("Failed to update status", {
@@ -141,12 +143,15 @@ const AstrologersTableView = ({ astrologers }) => {
   const rows = filteredAstrologers.map((a) => ({
     id: a._id,
     name: a.name || "-",
-    email: a.email || "-",
     city: a.city || "-",
     phone: a.phone || "-",
-    current_balance: a.current_balance ?? "-",
+    current_balance:
+      typeof a.current_balance === "number"
+        ? a.current_balance.toFixed(2)
+        : "-",
     status:
       activeStates[a._id] ?? (typeof a.status === "boolean" ? a.status : false),
+    is_busy: a.is_busy || false,
   }));
 
   const columns = [
@@ -158,11 +163,19 @@ const AstrologersTableView = ({ astrologers }) => {
       headerAlign: "center",
     },
     {
-      field: "email",
-      headerName: "Email",
+      field: "astro_status",
+      headerName: "Astrologer Status",
       flex: 1,
       align: "center",
       headerAlign: "center",
+      sortable: false,
+      renderCell: (params) => (
+        <Chip
+          label={params.row.is_busy ? "In Call" : "Available"}
+          color={params.row.is_busy ? "error" : "success"}
+          size="small"
+        />
+      ),
     },
     {
       field: "city",
@@ -224,7 +237,6 @@ const AstrologersTableView = ({ astrologers }) => {
               <RemoveRedEye />
             </IconButton>
           </Link>
-
           <IconButton
             size="small"
             sx={{ color: "#ff9800" }}

@@ -77,21 +77,28 @@ const EarningsTableView = () => {
       const comm = Number(m.commissionDeduction ?? 0);
       const final = Number(m.finalPayment ?? 0);
 
+      // calculate TDS (10% of final)
+      const tds = final * 0.1;
+      const netPayable = final - tds;
+
       return {
         id: astro._id,
         name: astro.name ?? "N/A",
         phone: astro.phone ?? "N/A",
         month: m.month,
 
-        // raw values (kept if you need them elsewhere)
+        // raw values
         totalAmountRaw: total,
         commissionDeductionRaw: comm,
         finalPaymentRaw: final,
+        tdsRaw: tds,
+        netPayableRaw: netPayable,
 
-        // display strings used by the grid
+        // display strings
         totalAmountText: inr(total),
         commissionDeductionText: inr(comm),
-        finalPaymentText: inr(final),
+        tdsText: inr(tds),
+        netPayableText: inr(netPayable),
       };
     }) || [];
 
@@ -168,7 +175,6 @@ const EarningsTableView = () => {
       >
         <DataGrid
           rows={rows}
-          // columns show pre-formatted text fields
           columns={[
             {
               field: "name",
@@ -194,7 +200,6 @@ const EarningsTableView = () => {
               align: "center",
               headerAlign: "center",
             },
-
             {
               field: "totalAmountText",
               headerName: "Total Amount",
@@ -212,8 +217,16 @@ const EarningsTableView = () => {
               headerAlign: "center",
             },
             {
-              field: "finalPaymentText",
-              headerName: "Final Payment",
+              field: "tdsText",
+              headerName: "TDS (10%)",
+              flex: 1,
+              minWidth: 150,
+              align: "center",
+              headerAlign: "center",
+            },
+            {
+              field: "netPayableText",
+              headerName: "Net Payable",
               flex: 1,
               minWidth: 150,
               align: "center",

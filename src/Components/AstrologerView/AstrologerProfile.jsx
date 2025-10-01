@@ -1,12 +1,42 @@
-import React from "react";
-import { Avatar, Stack, Typography, Box } from "@mui/material";
+import React, { useState } from "react";
+import { Avatar, Stack, Typography, Box, Button } from "@mui/material";
+import { toast } from "react-toastify";
+import api from "../../utils/api";
 
 const AstrologerProfile = ({ astrologer }) => {
+  const [loading, setLoading] = useState(false);
+
   function formatDate(dateStr) {
     const date = new Date(dateStr);
     const options = { month: "short", day: "numeric", year: "numeric" };
     return date.toLocaleDateString("en-US", options).replace(",", "'");
   }
+
+  const handleCompleteInteractions = async () => {
+    try {
+      setLoading(true);
+      await api.post("/super_admin/backend/complete_interactions", {
+        astrologerId: astrologer._id,
+      });
+      toast.success("All in-progress orders moved to completed", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+
+      // ✅ reload page after success
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000); // reload after 2s so toast is visible
+    } catch (err) {
+      console.error("Complete Interactions Error:", err);
+      toast.error("Failed to complete interactions", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Stack
@@ -23,7 +53,7 @@ const AstrologerProfile = ({ astrologer }) => {
       />
 
       {/* Info Section */}
-      <Stack spacing={2} justifyContent="center">
+      <Stack spacing={2} justifyContent="center" sx={{ flex: 1 }}>
         <Typography variant="h5" fontWeight={500} sx={{ color: "#ff9800" }}>
           {astrologer.name}
         </Typography>
@@ -37,6 +67,18 @@ const AstrologerProfile = ({ astrologer }) => {
           Joined on: {formatDate(astrologer.createdAt)}
         </Typography>
       </Stack>
+
+      {/* Action Section (Black marked place in screenshot) */}
+      <Box sx={{ alignSelf: { xs: "center", sm: "flex-start" } }}>
+        <Button
+          variant="contained"
+          color="warning"
+          disabled={loading}
+          onClick={handleCompleteInteractions}
+        >
+          {loading ? "Processing..." : "Complete Interactions"}
+        </Button>
+      </Box>
     </Stack>
   );
 };
