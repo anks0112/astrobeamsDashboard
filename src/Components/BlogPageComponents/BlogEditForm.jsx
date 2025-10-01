@@ -307,6 +307,8 @@ const BlogEditForm = ({ open, handleClose, refreshData, blogId }) => {
               <option value="H2">Heading 2</option>
               <option value="H3">Heading 3</option>
               <option value="H4">Heading 4</option>
+              <option value="H5">Heading 5</option>
+              <option value="H6">Heading 6</option>
               <option value="BLOCKQUOTE">Quote</option>
               <option value="PRE">Code Block</option>
             </TextField>
