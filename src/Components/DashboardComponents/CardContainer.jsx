@@ -1,33 +1,74 @@
 import React from "react";
 import { Box } from "@mui/material";
 import AnalyticsCard from "./AnalyticsCard";
-import { ShoppingCart, Storefront, ListAlt, People } from "@mui/icons-material";
+import {
+  TrendingUp,
+  TrendingDown,
+  People,
+  Loop,
+  Insights,
+  BarChart,
+} from "@mui/icons-material";
 
-const CardContainer = () => {
+const CardContainer = ({ stats }) => {
+  if (!stats) return null;
+
+  const {
+    DAU,
+    MAU,
+    retention_rate,
+    churn_rate_percent,
+    user_growth_rate_percent,
+  } = stats;
+
+  const growthPositive = parseFloat(user_growth_rate_percent) >= 0;
+
   const cardData = [
     {
-      title: "Total Users",
-      value: "2,300",
-      change: "+5%",
-      icon: <People fontSize="large" />,
+      title: "Active Users Today",
+      description: "Number of users who used the app today",
+      value: `${DAU} people`,
+      icon: <People fontSize="large" color="primary" />,
     },
     {
-      title: "Total Astrologers",
-      value: "3,052",
-      change: "-14%",
-      icon: <Storefront fontSize="large" />,
+      title: "Active Users This Month",
+      description: "Total unique users in the last 30 days",
+      value: `${MAU} people`,
+      icon: <BarChart fontSize="large" color="primary" />,
     },
     {
-      title: "Month's Earning",
-      value: "53,000",
-      change: "+55%",
-      icon: <ListAlt fontSize="large" />,
+      title: "User Growth Rate",
+      description: "Change in number of users compared to previous month",
+      value: `${user_growth_rate_percent}%`,
+      icon: growthPositive ? (
+        <TrendingUp fontSize="large" color="success" />
+      ) : (
+        <TrendingDown fontSize="large" color="error" />
+      ),
     },
     {
-      title: "Total Orders",
-      value: "173,000",
-      change: "+8%",
-      icon: <ShoppingCart fontSize="large" />,
+      title: "Churn Rate",
+      description: "Percentage of users who stopped using the app",
+      value: `${churn_rate_percent}%`,
+      icon: <Insights fontSize="large" color="warning" />,
+    },
+    {
+      title: "Retention Rate (1 Day)",
+      description: "Users who came back after 1 day",
+      value: `${retention_rate?.["1_day"]}%`,
+      icon: <Loop fontSize="large" color="secondary" />,
+    },
+    {
+      title: "Retention Rate (7 Days)",
+      description: "Users who stayed active for a week",
+      value: `${retention_rate?.["7_day"]}%`,
+      icon: <Loop fontSize="large" color="secondary" />,
+    },
+    {
+      title: "Retention Rate (30 Days)",
+      description: "Users who stayed active for a month",
+      value: `${retention_rate?.["30_day"]}%`,
+      icon: <Loop fontSize="large" color="secondary" />,
     },
   ];
 
@@ -37,8 +78,8 @@ const CardContainer = () => {
         <AnalyticsCard
           key={index}
           title={card.title}
+          subtitle={card.description}
           value={card.value}
-          change={card.change}
           icon={card.icon}
         />
       ))}
@@ -46,11 +87,10 @@ const CardContainer = () => {
   );
 };
 
-// Styles
 const styles = {
   container: {
     display: "grid",
-    gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+    gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
     gap: "20px",
     padding: "20px",
   },

@@ -24,7 +24,7 @@ const AnalyticsCard = ({ title, value, change, icon }) => {
             <Typography
               variant="body2"
               sx={{
-                color: change.startsWith("-") ? "red" : "green",
+                color: change?.startsWith("-") ? "red" : "green",
                 fontWeight: "bold",
               }}
             >

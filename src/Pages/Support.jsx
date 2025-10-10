@@ -15,16 +15,17 @@ import {
   Typography,
   TextField,
   Button,
+  TablePagination,
 } from "@mui/material";
 import { useNavigate } from "react-router";
 
-// ---- data fetch (logic unchanged) ----
+// ---- data fetch ----
 const fetchTickets = async () => {
   const { data } = await api.get(`super_admin/backend/fetch_support_ticket`);
   return Array.isArray(data?.data) ? data.data : [data?.data].filter(Boolean);
 };
 
-// ---- small helpers (no logic change) ----
+// ---- helpers ----
 const ellipsisSx = {
   maxWidth: 300,
   whiteSpace: "nowrap",
@@ -69,21 +70,56 @@ const Support = () => {
 
   const navigate = useNavigate();
 
-  // ---- search by user name ----
+  // ---- search ----
   const [query, setQuery] = useState("");
+
+  // ✅ Pagination states
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // ✅ Sort by latest first, then filter by query
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return tickets ?? [];
-    return (tickets ?? []).filter((t) =>
+    const sorted = (tickets ?? []).slice().sort((a, b) => {
+      const dateA = new Date(a?.createdAt || 0);
+      const dateB = new Date(b?.createdAt || 0);
+      return dateB - dateA; // latest first
+    });
+    if (!q) return sorted;
+    return sorted.filter((t) =>
       (t?.user_details?.name || "").toLowerCase().includes(q)
     );
   }, [tickets, query]);
 
-  // ---- view action ----
-  const handleView = useCallback((id) => {
-    navigate(`/support-ticket/${id}`);
-  }, []);
+  // ✅ Pagination slice
+  const paginated = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filtered.slice(start, start + rowsPerPage);
+  }, [filtered, page, rowsPerPage]);
 
+  const handleView = useCallback(
+    (id) => {
+      navigate(`/support-ticket/${id}`);
+    },
+    [navigate]
+  );
+
+  const handleChangePage = (_, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (e) => {
+    setRowsPerPage(parseInt(e.target.value, 10));
+    setPage(0);
+  };
+
+  // ✅ Ticket status counts
+  const totalCount = filtered.length;
+  const openCount = filtered.filter(
+    (t) => (t?.status || "").toLowerCase() === "open"
+  ).length;
+  const closedCount = filtered.filter(
+    (t) => (t?.status || "").toLowerCase() === "closed"
+  ).length;
+
+  // ---- Loading / error states ----
   if (isLoading) {
     return (
       <Box sx={{ p: 3, display: "flex", justifyContent: "center" }}>
@@ -100,6 +136,7 @@ const Support = () => {
     );
   }
 
+  // ---- UI ----
   return (
     <Box sx={{ p: 1, mt: 2 }}>
       <Box sx={{ mb: 2 }}>
@@ -115,14 +152,40 @@ const Support = () => {
         />
       </Box>
 
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 2, mb: 2 }}>
+        <Chip
+          label={`Total: ${totalCount}`}
+          color="primary"
+          variant="outlined"
+          sx={{ fontWeight: 600 }}
+        />
+        <Chip
+          label={`Open: ${openCount}`}
+          color="success"
+          variant="outlined"
+          sx={{ fontWeight: 600 }}
+        />
+        <Chip
+          label={`Closed: ${closedCount}`}
+          color="error"
+          variant="outlined"
+          sx={{ fontWeight: 600 }}
+        />
+      </Box>
+
       <TableContainer
         component={Paper}
-        sx={{ bgcolor: "#FEF2E7", paddingY: 5 }}
+        sx={{
+          bgcolor: "#FEF2E7",
+          overflowX: "auto",
+        }}
       >
         <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>User Name</TableCell>
+              <TableCell>User Type</TableCell>
+
               <TableCell>Phone</TableCell>
               <TableCell>Description</TableCell>
               <TableCell>Status</TableCell>
@@ -132,11 +195,13 @@ const Support = () => {
           </TableHead>
 
           <TableBody>
-            {filtered.map((t) => {
+            {paginated.map((t) => {
               const { label, sx } = getStatusMeta(t?.status);
               return (
                 <TableRow key={t?._id}>
                   <TableCell>{t?.user_details?.name || "-"}</TableCell>
+                  <TableCell>{t?.user_type || "-"}</TableCell>
+
                   <TableCell>{t?.user_details?.phone || "-"}</TableCell>
                   <TableCell>
                     <Box sx={ellipsisSx} title={t?.description}>
@@ -161,6 +226,8 @@ const Support = () => {
             })}
           </TableBody>
         </Table>
+
+        {/* ✅ Empty state */}
         {filtered.length === 0 && (
           <Box
             sx={{
@@ -173,6 +240,17 @@ const Support = () => {
             <Typography color="text.secondary">No tickets found.</Typography>
           </Box>
         )}
+
+        {/* ✅ Pagination */}
+        <TablePagination
+          component="div"
+          count={filtered.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25]}
+        />
       </TableContainer>
     </Box>
   );

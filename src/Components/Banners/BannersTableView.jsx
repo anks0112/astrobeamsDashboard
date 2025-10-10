@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Button, Stack, Typography ,IconButton} from "@mui/material";
+import { Box, Button, Stack, Typography, IconButton } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import AddBannerModal from "./AddBannerModal";
 import { Link } from "react-router-dom";
@@ -7,9 +7,12 @@ import { RemoveRedEye, Delete, Edit } from "@mui/icons-material";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
 import DeleteConfirmationModal from "../DeleteConfirmationModal";
+import EditBannerModal from "./EditBannerModal";
 
 const BannersTableView = ({ banners }) => {
   const [bannerOpen, setBannerOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedEditBannerId, setSelectedEditBannerId] = useState(null);
 
   const handleCreate = () => {
     console.log("create success");
@@ -84,30 +87,37 @@ const BannersTableView = ({ banners }) => {
         new Date(params.value).toLocaleDateString("en-GB"),
     },
 
-     {
-  field: "actions",
-  headerName: "Action",
-  width: 200,
-  align: "center",
-  headerAlign: "center",
-  renderCell: (params) => (
-    <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
-      <IconButton
-        size="small"
-        sx={{ color: "#ff9800" }}
-        onClick={() => {
-          setSelectedBannerId(params.row.id); // ✅ Set selected banner ID
-          setOpenModal(true); // ✅ Open confirmation modal
-        }}
-      >
-        <Delete />
-      </IconButton>
-    </Box>
-  ),
-}
-
-
-    
+    {
+      field: "actions",
+      headerName: "Action",
+      width: 200,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
+          <IconButton
+            size="small"
+            sx={{ color: "#ff9800" }}
+            onClick={() => {
+              setSelectedEditBannerId(params.row.id);
+              setEditModalOpen(true);
+            }}
+          >
+            <Edit />
+          </IconButton>
+          <IconButton
+            size="small"
+            sx={{ color: "#ff9800" }}
+            onClick={() => {
+              setSelectedBannerId(params.row.id); // ✅ Set selected banner ID
+              setOpenModal(true); // ✅ Open confirmation modal
+            }}
+          >
+            <Delete />
+          </IconButton>
+        </Box>
+      ),
+    },
   ];
 
   const rows =
@@ -119,32 +129,33 @@ const BannersTableView = ({ banners }) => {
       updatedAt: banner.updatedAt,
     })) || [];
 
-const [openModal, setOpenModal] = useState(false);
-const [selectedBannerId, setSelectedBannerId] = useState(null);
-const [loading, setLoading] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedBannerId, setSelectedBannerId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-const handleDelete = async () => {
-  if (!selectedBannerId) {
-    toast.error("No banner selected for deletion!");
-    return;
-  }
-  setLoading(true);
-  try {
-    const response = await api.delete(`/super_admin/backend/delete_banner/${selectedBannerId}`);
-    if (response.status === 200) {
-      toast.success("Banner deleted successfully!");
-      setOpenModal(false);
-      window.location.reload(); // You may choose a better refresh method
+  const handleDelete = async () => {
+    if (!selectedBannerId) {
+      toast.error("No banner selected for deletion!");
+      return;
     }
-  } catch (error) {
-    console.error("❌ Error deleting banner:", error);
-    toast.error("Error deleting banner.");
-    setOpenModal(false);
-  } finally {
-    setLoading(false);
-  }
-};
-
+    setLoading(true);
+    try {
+      const response = await api.delete(
+        `/super_admin/backend/delete_banner/${selectedBannerId}`
+      );
+      if (response.status === 200) {
+        toast.success("Banner deleted successfully!");
+        setOpenModal(false);
+        window.location.reload(); // You may choose a better refresh method
+      }
+    } catch (error) {
+      console.error("❌ Error deleting banner:", error);
+      toast.error("Error deleting banner.");
+      setOpenModal(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Box sx={{ padding: "20px" }}>
@@ -210,15 +221,20 @@ const handleDelete = async () => {
         open={bannerOpen}
         handleClose={() => setBannerOpen(false)}
       />
-      <DeleteConfirmationModal
-  open={openModal}
-  handleClose={() => setOpenModal(false)}
-  handleConfirm={handleDelete}
-  title="Delete Banner"
-  message="Are you sure you want to delete this banner? This action cannot be undone."
-  loading={loading}
-/>
+      <EditBannerModal
+        open={editModalOpen}
+        handleClose={() => setEditModalOpen(false)}
+        bannerId={selectedEditBannerId}
+      />
 
+      <DeleteConfirmationModal
+        open={openModal}
+        handleClose={() => setOpenModal(false)}
+        handleConfirm={handleDelete}
+        title="Delete Banner"
+        message="Are you sure you want to delete this banner? This action cannot be undone."
+        loading={loading}
+      />
     </Box>
   );
 };

@@ -83,7 +83,11 @@ const AddBannerModal = ({ open, handleClose }) => {
 
       if (response.data.success) {
         toast.success("Banner Created Successfully!");
-        handleClose(); // Close modal after success
+        handleClose();
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         alert(response.data.msg || "Failed to create banner.");
       }

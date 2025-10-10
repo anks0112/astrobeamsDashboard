@@ -1,8 +1,31 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Typography, MenuItem, Select } from "@mui/material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridToolbar,
+  GridToolbarQuickFilter,
+} from "@mui/x-data-grid";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAstrologerEarnings } from "../../redux/slices/earnings";
+import ExportEarningsToExcelButton from "./ExportEarningsToExcelButton";
+
+const CustomToolbar = () => (
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "flex-start",
+      alignItems: "center",
+      padding: "10px",
+    }}
+  >
+    <GridToolbarQuickFilter
+      variant="outlined"
+      placeholder="Search…"
+      debounceMs={1000}
+      sx={{ width: { xs: "100%", sm: "250px" } }}
+    />
+  </Box>
+);
 
 const EarningsTableView = () => {
   const dispatch = useDispatch();
@@ -16,7 +39,11 @@ const EarningsTableView = () => {
   }, [dispatch]);
 
   // formatters/helpers
-  const inr = (v) => `₹${Number(v || 0).toLocaleString("en-IN")}/-`;
+  const inr = (v) =>
+    `₹${Number(v || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   const norm = (s) => (s || "").toString().trim();
 
   // gather all available YYYY-MM periods
@@ -52,30 +79,22 @@ const EarningsTableView = () => {
   const handleMonthChange = (e) => setSelectedMonth(e.target.value);
 
   // build rows: include both raw numbers (for any logic/export) and pre-formatted text for display
-  const rows =
-    (earnings || []).map((astro) => {
+  const rows = (earnings || [])
+    .map((astro) => {
       const txs = (astro.Transactions || []).map((t) => ({
         ...t,
         month: norm(t.month),
       }));
 
-      let monthEarnings = txs.find((t) => t.month === selectedPeriod);
-      if (!monthEarnings && txs.length) {
-        monthEarnings = [...txs]
-          .sort((a, b) => a.month.localeCompare(b.month))
-          .at(-1);
-      }
+      // ✅ Only include astrologers who actually have data for the selected month
+      const monthEarnings = txs.find((t) => t.month === selectedPeriod);
 
-      const m = monthEarnings || {
-        month: selectedPeriod || "—",
-        totalAmount: 0,
-        commissionDeduction: 0,
-        finalPayment: 0,
-      };
+      // ⛔️ If no data for selected month, skip this astrologer
+      if (!monthEarnings) return null;
 
-      const total = Number(m.totalAmount ?? 0);
-      const comm = Number(m.commissionDeduction ?? 0);
-      const final = Number(m.finalPayment ?? 0);
+      const total = Number(monthEarnings.totalAmount ?? 0);
+      const comm = Number(monthEarnings.commissionDeduction ?? 0);
+      const final = Number(monthEarnings.finalPayment ?? 0);
 
       // calculate TDS (10% of final)
       const tds = final * 0.1;
@@ -85,7 +104,7 @@ const EarningsTableView = () => {
         id: astro._id,
         name: astro.name ?? "N/A",
         phone: astro.phone ?? "N/A",
-        month: m.month,
+        month: monthEarnings.month,
 
         // raw values
         totalAmountRaw: total,
@@ -100,7 +119,8 @@ const EarningsTableView = () => {
         tdsText: inr(tds),
         netPayableText: inr(netPayable),
       };
-    }) || [];
+    })
+    .filter(Boolean);
 
   return (
     <Box sx={{ padding: "20px" }}>
@@ -173,6 +193,10 @@ const EarningsTableView = () => {
           overflow: "hidden",
         }}
       >
+        <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+          <ExportEarningsToExcelButton rows={rows} />
+        </Box>
+
         <DataGrid
           rows={rows}
           columns={[
@@ -235,12 +259,8 @@ const EarningsTableView = () => {
           ]}
           getRowId={(r) => r.id}
           initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          slots={{ toolbar: GridToolbar }}
-          slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              quickFilterProps: { debounceMs: 1000 },
-            },
+          slots={{
+            toolbar: CustomToolbar, // ✅ custom toolbar (search only)
           }}
           pageSizeOptions={[10]}
           disableRowSelectionOnClick
@@ -258,10 +278,6 @@ const EarningsTableView = () => {
               justifyContent: "center",
               alignItems: "center",
               textAlign: "center",
-            },
-            "& .MuiDataGrid-toolbarContainer": {
-              flexDirection: "row-reverse",
-              margin: "10px",
             },
           }}
         />

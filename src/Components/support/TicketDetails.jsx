@@ -39,6 +39,8 @@ const TicketDetails = ({ ticket }) => {
   const t = Array.isArray(ticket) ? ticket?.[0] : ticket;
   if (!t) return null;
 
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
+
   const status = (t.status || "").toLowerCase();
   const isOpen = status === "open";
   const totalMsgs = Array.isArray(t.messages) ? t.messages.length : 0;
@@ -79,11 +81,6 @@ const TicketDetails = ({ ticket }) => {
       }}
     >
       <Stack direction="row" alignItems="center" spacing={2}>
-        <Avatar
-          src={t.photo}
-          alt={t?.user_details?.name || "User"}
-          sx={{ width: 64, height: 64 }}
-        />
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="h6" sx={{ ...ellipsisOneLine, maxWidth: 260 }}>
             {t?.user_details?.name || "-"}
@@ -127,12 +124,23 @@ const TicketDetails = ({ ticket }) => {
             fontWeight: 600,
           }}
         />
+        <Avatar
+          src={t.photo}
+          alt={t?.user_details?.name || "User"}
+          sx={{
+            width: 64,
+            height: 64,
+            cursor: t.photo ? "pointer" : "default",
+            border: t.photo ? "2px solid #ccc" : "none",
+          }}
+          onClick={() => t.photo && setPhotoPreviewOpen(true)}
+        />
+
         <Row label="Ticket ID" value={t._id} mono />
         <Row label="User Type" value={t.user_type || "-"} />
         <Row
           label="Description"
           value={t.description || "-"}
-          oneLine
           title={t.description}
         />
         <Row label="Created At" value={formatDateTime(t.createdAt)} />
@@ -167,6 +175,28 @@ const TicketDetails = ({ ticket }) => {
           >
             Confirm
           </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={photoPreviewOpen}
+        onClose={() => setPhotoPreviewOpen(false)}
+        maxWidth="md"
+      >
+        <DialogTitle>Profile Photo</DialogTitle>
+        <DialogContent>
+          <Box
+            component="img"
+            src={t.photo}
+            alt="Profile"
+            sx={{
+              width: "100%",
+              height: "100%",
+              borderRadius: 1,
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPhotoPreviewOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Paper>

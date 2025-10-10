@@ -7,7 +7,11 @@ import {
   Typography,
   Chip,
 } from "@mui/material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridToolbar,
+  GridToolbarQuickFilter,
+} from "@mui/x-data-grid";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Delete, Edit, RemoveRedEye } from "@mui/icons-material";
 import AddAstrologerModal from "./AddAstrologerModal";
@@ -15,6 +19,34 @@ import DeleteConfirmationModal from "../DeleteConfirmationModal";
 import { toast } from "react-toastify";
 import api from "../../utils/api";
 import EditAstrologerModal from "./EditAstrologerModal";
+
+const CustomToolbar = ({ onImport }) => (
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      p: 1,
+      gap: 2,
+    }}
+  >
+    <GridToolbarQuickFilter
+      variant="outlined"
+      placeholder="Search…"
+      debounceMs={800}
+      sx={{ width: { xs: "100%", sm: "250px" } }}
+    />
+
+    <Button
+      variant="contained"
+      component="label"
+      sx={{ bgcolor: "#ff9800", color: "#fff" }}
+    >
+      Import Excel
+      <input type="file" accept=".xlsx,.xls" hidden onChange={onImport} />
+    </Button>
+  </Box>
+);
 
 const AstrologersTableView = ({ astrologers }) => {
   const navigate = useNavigate();
@@ -42,6 +74,37 @@ const AstrologersTableView = ({ astrologers }) => {
       return acc;
     }, {})
   );
+
+  const handleImportExcel = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await api.post(
+        "/super_admin/backend/astrologer/import_excel",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      if (res.status === 200 || res.data.success) {
+        toast.success("Excel imported successfully!", { autoClose: 2000 });
+        window.location.reload();
+      } else {
+        throw new Error(res.data?.msg || "Import failed");
+      }
+    } catch (error) {
+      console.error("❌ Import Error:", error);
+      toast.error(error.message || "Error importing file", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    } finally {
+      event.target.value = ""; // Reset file input
+    }
+  };
 
   const handleToggleStatus = async (id, currentStatus) => {
     const full = recordById[id];
@@ -301,12 +364,9 @@ const AstrologersTableView = ({ astrologers }) => {
           rows={rows}
           columns={columns}
           initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          slots={{ toolbar: GridToolbar }}
+          slots={{ toolbar: CustomToolbar }}
           slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              quickFilterProps: { debounceMs: 1000 },
-            },
+            toolbar: { onImport: handleImportExcel },
           }}
           pageSizeOptions={[10]}
           autoHeight
