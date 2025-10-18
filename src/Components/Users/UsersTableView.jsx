@@ -4,12 +4,12 @@ import {
   GridToolbar,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import ExportToExcelButton from "../../utils/exports/ExportToExcelButton";
 import { useState } from "react";
 import DeleteConfirmationModal from "../DeleteConfirmationModal";
 import api from "../../utils/api";
-import { Delete } from "@mui/icons-material";
+import { Delete, RemoveRedEye } from "@mui/icons-material";
 import { toast } from "react-toastify";
 
 const CustomToolbar = () => (
@@ -153,16 +153,23 @@ const UsersTableView = ({ users }) => {
       align: "center",
       headerAlign: "center",
       renderCell: (params) => (
-        <IconButton
-          size="small"
-          sx={{ color: "#ff9800" }}
-          onClick={() => {
-            setSelectedUserId(params.row.id);
-            setOpenModal(true);
-          }}
-        >
-          <Delete />
-        </IconButton>
+        <>
+          <Link to={`/user-view/${params.row.id}`}>
+            <IconButton size="small" sx={{ color: "#ff9800" }}>
+              <RemoveRedEye />
+            </IconButton>
+          </Link>
+          <IconButton
+            size="small"
+            sx={{ color: "#ff9800" }}
+            onClick={() => {
+              setSelectedUserId(params.row.id);
+              setOpenModal(true);
+            }}
+          >
+            <Delete />
+          </IconButton>
+        </>
       ),
     },
   ];

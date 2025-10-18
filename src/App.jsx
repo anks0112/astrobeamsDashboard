@@ -18,6 +18,7 @@ import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 import Support from "./Pages/Support";
 import SupportInner from "./Pages/SupportInner";
+import CustomerView from "./Pages/CustomerView";
 
 // ✅ Layout Component (Navbar, Sidebar & Dynamic Content)
 const Layout = () => {
@@ -67,9 +68,9 @@ const router = createBrowserRouter([
       { path: "/banners", element: <Banners /> },
       { path: "/blog", element: <Blog /> },
       { path: "/support-ticket/:id", element: <SupportInner /> },
-
       { path: "/blog-inner/:id", element: <BlogPageWrapper /> },
       { path: "/astrologer-view/:id", element: <AstrologerView /> },
+      { path: "/user-view/:id", element: <CustomerView /> },
     ],
   },
   // { path: "*", element: <NotFound /> },

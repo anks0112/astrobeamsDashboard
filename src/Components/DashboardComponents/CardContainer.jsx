@@ -19,6 +19,7 @@ const CardContainer = ({ stats }) => {
     retention_rate,
     churn_rate_percent,
     user_growth_rate_percent,
+    todaysSignups,
   } = stats;
 
   const growthPositive = parseFloat(user_growth_rate_percent) >= 0;
@@ -28,6 +29,12 @@ const CardContainer = ({ stats }) => {
       title: "Active Users Today",
       description: "Number of users who used the app today",
       value: `${DAU} people`,
+      icon: <People fontSize="large" color="primary" />,
+    },
+    {
+      title: "User Signups Today",
+      description: "Number of users who signed in",
+      value: `${todaysSignups} people`,
       icon: <People fontSize="large" color="primary" />,
     },
     {
