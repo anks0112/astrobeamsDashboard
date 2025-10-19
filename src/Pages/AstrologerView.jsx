@@ -10,6 +10,7 @@ import AstrologerPricingStatus from "../Components/AstrologerView/AstrologerPric
 import AstrologerSessionsTable from "../Components/AstrologerView/AstrologerSessionsTable";
 import AstrologerSessionStats from "../Components/AstrologerView/AstrologerSessionStats";
 import api from "../utils/api";
+import AstrologerReviewsTable from "../Components/AstrologerView/AstrologerReviewsTable";
 
 const AstrologerView = () => {
   const { id } = useParams();
@@ -91,6 +92,14 @@ const AstrologerView = () => {
       <AstrologerPricingStatus astrologer={astrologer} />
       <AstrologerSessionStats data={interactions} />
       <AstrologerSessionsTable sessions={sessions} />
+      {sessions?.some(
+        (s) => s.rating || (s.review && s.review.trim() !== "")
+      ) && (
+        <AstrologerReviewsTable
+          sessions={sessions}
+          refreshSessions={fetchSessions} // optional to auto-refresh after edit
+        />
+      )}
     </Box>
   );
 };
