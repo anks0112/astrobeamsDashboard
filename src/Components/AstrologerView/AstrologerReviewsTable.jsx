@@ -14,6 +14,7 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import axios from "axios";
+import api from "../../utils/api";
 
 // ✅ Component
 const AstrologerReviewsTable = ({ sessions = [], refreshSessions }) => {
@@ -48,7 +49,7 @@ const AstrologerReviewsTable = ({ sessions = [], refreshSessions }) => {
 
   const handleSaveEdit = async () => {
     try {
-      await axios.patch("/super_admin/backend/update_interaction_review", {
+      await api.patch("/super_admin/backend/update_interaction_review", {
         interactionId: selectedRow.interactionId,
         review: editReviewText,
         rating: editRating,
