@@ -6,6 +6,7 @@ import {
   Switch,
   Typography,
   Chip,
+  Stack,
 } from "@mui/material";
 import {
   DataGrid,
@@ -19,8 +20,9 @@ import DeleteConfirmationModal from "../DeleteConfirmationModal";
 import { toast } from "react-toastify";
 import api from "../../utils/api";
 import EditAstrologerModal from "./EditAstrologerModal";
+import * as XLSX from "xlsx";
 
-const CustomToolbar = ({ onImport }) => (
+const CustomToolbar = ({ onImport, onExport }) => (
   <Box
     sx={{
       display: "flex",
@@ -37,14 +39,24 @@ const CustomToolbar = ({ onImport }) => (
       sx={{ width: { xs: "100%", sm: "250px" } }}
     />
 
-    <Button
-      variant="contained"
-      component="label"
-      sx={{ bgcolor: "#ff9800", color: "#fff" }}
-    >
-      Import Excel
-      <input type="file" accept=".xlsx,.xls" hidden onChange={onImport} />
-    </Button>
+    <Stack direction="row" spacing={2}>
+      <Button
+        variant="contained"
+        sx={{ bgcolor: "#ff9800", color: "#fff" }}
+        onClick={onExport}
+      >
+        Export Astrologers
+      </Button>
+
+      <Button
+        variant="contained"
+        component="label"
+        sx={{ bgcolor: "#ff9800", color: "#fff" }}
+      >
+        Import Excel
+        <input type="file" accept=".xlsx,.xls" hidden onChange={onImport} />
+      </Button>
+    </Stack>
   </Box>
 );
 
@@ -74,6 +86,56 @@ const AstrologersTableView = ({ astrologers }) => {
       return acc;
     }, {})
   );
+
+  const handleExportAstrologers = () => {
+    if (!astrologers?.length) return;
+
+    const formatted = astrologers.map((a) => ({
+      Name: a.name || "-",
+      Phone: a.phone || "",
+      Email: a.email || "",
+      Gender: a.gender || "",
+      City: a.city || "",
+      Languages: a.language || "",
+      Expertise: Array.isArray(a.expertise)
+        ? a.expertise.join(", ")
+        : a.expertise || "",
+      Experience: a.experience || "",
+      "Chat Price": a.chat_price ?? "-",
+      "Voice Call Price": a.voice_call_price ?? "-",
+      "Chat Offer Price": a.chat_offer_price ?? "-",
+      "Voice Offer Price": a.voice_call_offer_price ?? "-",
+      Commission: a.commission ?? "-",
+      "Current Balance": a.current_balance ?? "0",
+      "Withdrawal Balance": a.withdrawl_balance ?? "0",
+      Status: a.status ? "Active" : "Inactive",
+      Featured: a.featured ? "Yes" : "No",
+      "Date of Birth": a.dob ? new Date(a.dob).toLocaleDateString("en-GB") : "",
+      "Created On": a.createdAt
+        ? new Date(a.createdAt).toLocaleDateString("en-GB")
+        : "",
+      "Updated On": a.updatedAt
+        ? new Date(a.updatedAt).toLocaleDateString("en-GB")
+        : "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(formatted);
+
+    const phoneCol = Object.keys(formatted[0]).indexOf("Phone");
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let row = range.s.r + 1; row <= range.e.r; row++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: row, c: phoneCol });
+      const cell = ws[cellAddress];
+      if (cell && cell.v) cell.t = "s";
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Astrologers");
+    XLSX.writeFile(
+      wb,
+      `Astrologers_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
+  };
 
   const handleImportExcel = async (event) => {
     const file = event.target.files[0];
@@ -366,7 +428,10 @@ const AstrologersTableView = ({ astrologers }) => {
           initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
           slots={{ toolbar: CustomToolbar }}
           slotProps={{
-            toolbar: { onImport: handleImportExcel },
+            toolbar: {
+              onImport: handleImportExcel,
+              onExport: handleExportAstrologers,
+            },
           }}
           pageSizeOptions={[10]}
           autoHeight
